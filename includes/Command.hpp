@@ -23,7 +23,7 @@ enum class CommandType
 class Command
 {
     public:
-        CommandType Command(std::string message);
+        Command(std::string message);
         Nick nick;
         Join join;
 
