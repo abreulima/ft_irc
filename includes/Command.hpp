@@ -13,7 +13,7 @@ struct Nick
     std::string nick;
 };
 
-enum CommandType
+enum class CommandType
 {
     JOIN,
     NICK,
@@ -23,7 +23,7 @@ enum CommandType
 class Command
 {
     public:
-        Command(std::string message);
+        CommandType Command(std::string message);
         Nick nick;
         Join join;
 
