@@ -1,5 +1,4 @@
-
-SOURCES		:= sources/main.cpp sources/Client.cpp sources/Server.cpp sources/Channel.cpp sources/Command.cpp
+SOURCES		:= Main.cpp Server.cpp Client.cpp Command.cpp
 
 all: $(SOURCES)
-	c++ $(SOURCES) -Wall -Werror -Wextra -o server
+	c++ -g -std=c++98 -Wall -Werror -Wextra $(SOURCES) -o server
