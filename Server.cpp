@@ -83,15 +83,24 @@ void Server::Run()
                     Command cmd;
                     CommandType type =  cmd.Parse(incoming);
 
+                    // Adiciona
                     if (type == NICK)
                     {
-
+                        std::cout << cmd.nickData.name << std::endl; 
+                        Client c(cmd.nickData.name, cmd.nickData.nick);
+                        clients[fds.at(i).fd] = c;
+                        std::cout << "Cliente conectado: " << clients[fds.at(i).fd].GetNick() << " " << clients[fds.at(i).fd].GetName() << std::endl;
                     }
                     
                     else if (type == JOIN)
                     {
+                        // Pega o Client de quem enviou
+                        Client c = clients[fds.at(i).fd];
+
                         //:Alice!alice@localhost JOIN #general
-                        std::string msg = ":leschunc!leschunc@42.pt JOIN #general\r\n";
+                        // Nick username host
+                        std::string msg = ":" + c.GetNick() + "!" + c.GetName() + "@42.pt JOIN " + cmd.joinData.channel;
+                        //std::string msg = ":leschunc!leschunc@42.pt JOIN #general\r\n";
                         send(fds.at(i).fd, msg.c_str(), msg.size(), 0);
 
                     }
@@ -99,12 +108,20 @@ void Server::Run()
                     else if (type == MSG)
                     {
 
-                        // Se uma mensagem foi enviada, vamos enviar para todos
+                        // Pega o Client de quem enviou
+                        Client c = clients[fds.at(i).fd];
+
+                        // Monta a menssagem a ser enviada
+                        // Exemplo
+                        // :Name!nick@42.pt PRIVMSG #general :<Message>
+                        std::string message = ":" + c.GetName() + "!" + c.GetNick() + "@42.pt " + "PRIVMSG #general :" + cmd.msgData.message;
+
+                        // Envia a vamos enviar para todos
                         for (size_t j = 1; j < fds.size(); j++)
                         {
                             if (i != j)
                             {
-                                std::string msg = ":leschunc!leschunc@42.pt PRIVMSG #general :Hello everyone!\r\n";
+                                std::string msg = message;
                                 send(fds.at(j).fd, msg.c_str(), msg.size(), 0);
                             }
                         }

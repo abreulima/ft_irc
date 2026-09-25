@@ -4,16 +4,6 @@
 #include <string>
 #include <iostream>
 
-struct NickUser
-{
-    std::string nick;
-    std::string name;
-};
-
-struct NICK
-{
-
-};
 
 enum CommandType
 {
@@ -26,19 +16,32 @@ enum CommandType
 
 };
 
-struct MSG 
+struct nick_t
 {
-    std::string data;
+    std::string nick;
+    std::string name;
+};
+
+struct msg_t 
+{
+    std::string message;
+};
+
+struct join_t
+{
+    std::string channel;
 };
 
 class Command
 {
 private:
-    //std::string toSend;
-    struct MSG msg;
+    std::string toSend;
 
 public:
     CommandType Parse(std::string data);
+    struct msg_t msgData;
+    struct nick_t nickData;
+    struct join_t joinData;
 };
 
 #endif

@@ -30,7 +30,8 @@ private:
     int serv_fd;
     void polling();
     //std::vector<Client> clients;
-    std::map<pollfd_t, Client> clients;
+    //std::map<pollfd_t, Client> clients;
+    std::map<int, Client> clients;
 
 
 public:

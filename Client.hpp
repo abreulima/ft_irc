@@ -16,6 +16,9 @@ public:
 	Client();
 	Client(std::string username, std::string nick);
 	~Client();
+
+	std::string GetName();
+	std::string GetNick();
 };
 
 #endif

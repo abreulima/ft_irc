@@ -34,8 +34,12 @@ CommandType Command::Parse(std::string data)
 
         if (strings.size() == 3)
         {
-            std::cout << strings[1] << std::endl;
-            std::cout << strings[2] << std::endl;
+            
+            std::vector<std::string> substringNick = getStrings(strings[1], " "); //    NICK leschunc
+            nickData.nick = substringNick[1];
+
+            std::vector<std::string> substringRealname = getStrings(strings[2], ":"); //    USER leschunc 0 * :realname
+            nickData.nick = substringRealname[1];
         }
 
         return NICK;
@@ -50,7 +54,7 @@ CommandType Command::Parse(std::string data)
         std::vector<std::string> strings = getStrings(data, ":");
 
         if (strings.size() > 2)
-            msg.data = strings[0];
+            msgData.message = strings[0];
 
         return MSG;
     }

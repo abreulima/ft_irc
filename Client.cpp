@@ -17,3 +17,13 @@ Client::~Client()
 {
 
 }
+
+std::string Client::GetName()
+{
+    return name;
+}
+
+std::string Client::GetNick()
+{
+    return nick;
+}
