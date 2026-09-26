@@ -16,6 +16,7 @@ std::vector<std::string> getStrings(std::string s, std::string split)
         start = pos + split.size();
     }
 
+    res.push_back(s.substr(start));
     return res;
 }
 
@@ -29,19 +30,15 @@ CommandType Command::Parse(std::string data)
     */
     if (data.compare(0, 6, "CAP LS") == 0)
     {
-
         std::vector<std::string> strings = getStrings(data, "\r\n");
-
-        if (strings.size() == 3)
+        if (strings.size() > 2)
         {
-            
             std::vector<std::string> substringNick = getStrings(strings[1], " "); //    NICK leschunc
-            nickData.nick = substringNick[1];
+            nickData.nick = substringNick.at(1);
 
             std::vector<std::string> substringRealname = getStrings(strings[2], ":"); //    USER leschunc 0 * :realname
-            nickData.nick = substringRealname[1];
+            nickData.name = substringRealname.at(1);
         }
-
         return NICK;
     }
 
@@ -50,12 +47,9 @@ CommandType Command::Parse(std::string data)
     */
     else if (data.compare(0, 7, "PRIVMSG") == 0)
     {
-
         std::vector<std::string> strings = getStrings(data, ":");
-
-        if (strings.size() > 2)
-            msgData.message = strings[0];
-
+        if (strings.size() > 1)
+            msgData.message = strings[1];
         return MSG;
     }
 
@@ -64,10 +58,11 @@ CommandType Command::Parse(std::string data)
     */
     else if (data.compare(0, 4, "JOIN") == 0)
     {
+        std::vector<std::string> strings = getStrings(data, " ");
+        if (strings.size() > 1)
+            joinData.channel = strings.at(1); // #general
         return JOIN;
     }
     
-
     return ANOTHER;
-
 }

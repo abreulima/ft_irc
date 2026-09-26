@@ -16,6 +16,11 @@ Server::~Server()
 bool Server::Init()
 {
     serv_fd = socket(AF_INET, SOCK_STREAM, 0);
+    
+    // resolve o problema do endereco em uso
+    int opt = 1;
+    setsockopt(serv_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    //setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
 
     sockaddr_in_t serv_addr;
 
@@ -51,11 +56,6 @@ void Server::Run()
             if (new_cli >= 0)
             {
                 fds.push_back((pollfd_t){new_cli, POLLIN, 0});
-                
-                
-                
-                std::string message(":42.pt 001 leschunc :Oi lindo!\r\n");
-                send(new_cli, message.c_str(), message.size(), 0);
             }
         }
 
@@ -76,8 +76,8 @@ void Server::Run()
                 else
                 {
                     buf[read_bytes] = 0;
-                    //std::cout << "User: " << fds.at(i).fd << buf << "\n";
 
+                    // transforma num std::string para trabalhar melhor
                     std::string incoming(buf);
 
                     Command cmd;
@@ -86,23 +86,36 @@ void Server::Run()
                     // Adiciona
                     if (type == NICK)
                     {
-                        std::cout << cmd.nickData.name << std::endl; 
                         Client c(cmd.nickData.name, cmd.nickData.nick);
                         clients[fds.at(i).fd] = c;
-                        std::cout << "Cliente conectado: " << clients[fds.at(i).fd].GetNick() << " " << clients[fds.at(i).fd].GetName() << std::endl;
+                        
+                        //std::string message(":42.pt 001 leschunc :Oi lindo!\r\n");
+                        std::string message("42.pt 001 " + c.GetNick() + " : Oi gato!\r\n");
+                        send(new_cli, message.c_str(), message.size(), 0);
+
+                        // Debug
+                        std::cout << "Cliente conectado: " 
+                        << clients[fds.at(i).fd].GetNick() << " " 
+                        << clients[fds.at(i).fd].GetName() << " "
+                        << std::endl;
                     }
-                    
+
                     else if (type == JOIN)
                     {
                         // Pega o Client de quem enviou
                         Client c = clients[fds.at(i).fd];
 
-                        //:Alice!alice@localhost JOIN #general
-                        // Nick username host
+                        //:Nick!username@localhost JOIN #canal
                         std::string msg = ":" + c.GetNick() + "!" + c.GetName() + "@42.pt JOIN " + cmd.joinData.channel;
-                        //std::string msg = ":leschunc!leschunc@42.pt JOIN #general\r\n";
                         send(fds.at(i).fd, msg.c_str(), msg.size(), 0);
 
+                        // Debug
+                        std::cout 
+                        << "Cliente "
+                        << c.GetName()
+                        << "entrou no canal " 
+                        << cmd.joinData.channel 
+                        << std::endl;
                     }
 
                     else if (type == MSG)
@@ -111,12 +124,10 @@ void Server::Run()
                         // Pega o Client de quem enviou
                         Client c = clients[fds.at(i).fd];
 
-                        // Monta a menssagem a ser enviada
-                        // Exemplo
-                        // :Name!nick@42.pt PRIVMSG #general :<Message>
+                        // :Name!usernamek@localhost PRIVMSG #canal> :Mensagem
                         std::string message = ":" + c.GetName() + "!" + c.GetNick() + "@42.pt " + "PRIVMSG #general :" + cmd.msgData.message;
 
-                        // Envia a vamos enviar para todos
+                        // Envia a mensagem para todos os outros clientes (aka fds)
                         for (size_t j = 1; j < fds.size(); j++)
                         {
                             if (i != j)
@@ -126,6 +137,24 @@ void Server::Run()
                             }
                         }
 
+                        // DEBUG
+                        std::cout 
+                        << "Cliente "
+                        << c.GetName()
+                        << "enviou no canal" 
+                        << "#general" // ainda nao tem parsing do canal
+                        << "a mensagem: "
+                        << cmd.msgData.message
+                        << std::endl;
+                    }
+
+                    else 
+                    {
+                        // DEBUG
+                        std::cout 
+                        << "Comando desconhecido: " 
+                        << incoming 
+                        << std::endl;
                     }
 
                
