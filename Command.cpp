@@ -22,7 +22,10 @@ std::vector<std::string> getStrings(std::string s, std::string split)
 
 CommandType Command::Parse(std::string data)
 {
-
+    /* 
+    Raw data
+    */
+    std::cout << data << "\n";
     /*
     CAP LS 302
     NICK leschunc
@@ -36,7 +39,7 @@ CommandType Command::Parse(std::string data)
             std::vector<std::string> substringNick = getStrings(strings[1], " "); //    NICK leschunc
             nickData.nick = substringNick.at(1);
 
-            std::vector<std::string> substringRealname = getStrings(strings[2], ":"); //    USER leschunc 0 * :realname
+            std::vector<std::string> substringRealname = getStrings(strings[2], " "); //    USER leschunc 0 * :realname
             nickData.name = substringRealname.at(1);
         }
         return NICK;
@@ -47,9 +50,10 @@ CommandType Command::Parse(std::string data)
     */
     else if (data.compare(0, 7, "PRIVMSG") == 0)
     {
-        std::vector<std::string> strings = getStrings(data, ":");
-        if (strings.size() > 1)
-            msgData.message = strings[1];
+        std::string msg = data.substr(data.find(":", 0)); 
+
+        if (msg.size() > 1)
+            msgData.message = msg;
         return MSG;
     }
 
@@ -66,3 +70,7 @@ CommandType Command::Parse(std::string data)
     
     return ANOTHER;
 }
+/* 
+PRIVMSG leo hello
+
+*/
