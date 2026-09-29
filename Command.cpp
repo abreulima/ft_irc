@@ -37,12 +37,12 @@ CommandType Command::Parse(std::string data)
         if (strings.size() > 2)
         {
             std::vector<std::string> substringNick = getStrings(strings[1], " "); //    NICK leschunc
-            nickData.nick = substringNick.at(1);
+            capData.nick = substringNick.at(1);
 
             std::vector<std::string> substringRealname = getStrings(strings[2], " "); //    USER leschunc 0 * :realname
-            nickData.name = substringRealname.at(1);
+            capData.name = substringRealname.at(1);
         }
-        return NICK;
+        return CAP;
     }
 
     /*

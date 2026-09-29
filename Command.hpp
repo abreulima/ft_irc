@@ -10,16 +10,16 @@ enum CommandType
     NICK,
     MSG,
     JOIN,
-    ANOTHER
-
-    //
-
+    ANOTHER,
+    ERROR,
+    CAP
 };
 
-struct nick_t
+struct cap
 {
     std::string nick;
     std::string name;
+    std::string password;
 };
 
 struct msg_t 
@@ -40,7 +40,7 @@ private:
 public:
     CommandType Parse(std::string data);
     struct msg_t msgData;
-    struct nick_t nickData;
+    struct cap capData;
     struct join_t joinData;
 };
 

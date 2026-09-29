@@ -21,6 +21,8 @@
 typedef struct pollfd pollfd_t;
 typedef struct sockaddr_in sockaddr_in_t;
 
+#include "Channel.hpp"
+
 class Server
 {
 private:
@@ -28,11 +30,12 @@ private:
     std::vector<pollfd_t> fds;
     bool isRunning;
     int serv_fd;
-    void polling();
+    //void polling();
     //std::vector<Client> clients;
     //std::map<pollfd_t, Client> clients;
     std::map<int, Client> clients;
 
+    std::vector<Channel> channels;
 
 public:
     Server();

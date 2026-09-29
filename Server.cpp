@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Command.hpp"
+#include "Connection.hpp"
 
 #include <cerrno>
 #include <cstdio>
@@ -84,17 +85,21 @@ void Server::Run()
                     CommandType type =  cmd.Parse(incoming);
 
                     // Adiciona
-                    if (type == NICK)
+                    if (type == CAP)
                     {
-                        Client c(cmd.nickData.name, cmd.nickData.nick);
+
+                        Client c(cmd.capData.name, cmd.capData.nick);
                         clients[fds.at(i).fd] = c;
+
+                        //Client c(cmd.nickData.name, cmd.nickData.nick);
+                        //clients[fds.at(i).fd] = c;
                         
                         //std::string message(":42.pt 001 leschunc :Oi lindo!\r\n");
                         std::string message("42.pt 001 " + c.GetNick() + " : Oi gato!\r\n");
                         send(new_cli, message.c_str(), message.size(), 0);
 
                         // Debug
-                        std::cout << "Cliente conectado: " 
+                        std::cout << "Conexao com: " 
                         << clients[fds.at(i).fd].GetNick() << " " 
                         << clients[fds.at(i).fd].GetName() << " "
                         << std::endl;
@@ -104,6 +109,13 @@ void Server::Run()
                     {
                         // Pega o Client de quem enviou
                         Client c = clients[fds.at(i).fd];
+
+
+                        
+                        // 
+
+                        // Get Member in  Channel
+
 
                         //:Nick!username@localhost JOIN #canal
                         std::string msg = ":" + c.GetNick() + "!" + c.GetName() + "@42.pt JOIN " + cmd.joinData.channel;
