@@ -19,6 +19,9 @@ public:
 
 	std::string GetName();
 	std::string GetNick();
+	void SetNick(std::string nick);
+	void SetName(std::string nick);
+
 };
 
 #endif

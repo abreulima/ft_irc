@@ -20,23 +20,18 @@ public:
     std::string name;
     std::map<Client*, MemberChannel> channels;
 
-    bool IsMember(Client *c)
+    Channel(const std::string &name) : name(name) {}
+
+    bool HasMember(Client *c)
     {
-        if (channels.count(c) > 0)
-            return true;
-        return false;
+        return (channels.count(c) > 0);
     }
 
-    Client* GetorAdd(std::string channel, std::string)
+    Client* AddMember(Client* c)
     {
-
-        if (IsMember(c))
-            return c;
-
         MemberChannel memberChannel;
         channels[c] = memberChannel;
-
-        return ch
+        return c;
     };
 
 };

@@ -27,3 +27,12 @@ std::string Client::GetNick()
 {
     return nick;
 }
+void Client::SetNick(std::string nick)
+{
+    this->nick = nick;
+}
+
+void Client::SetName(std::string name)
+{
+    this->name = name;
+}

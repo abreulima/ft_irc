@@ -8,11 +8,19 @@
 enum CommandType
 {
     NICK,
+    USER,
     MSG,
     JOIN,
     ANOTHER,
     ERROR,
+    WHO,
+    MODE,
     CAP
+};
+
+struct nick_t
+{
+    std::string nick;
 };
 
 struct cap
@@ -25,6 +33,12 @@ struct cap
 struct msg_t 
 {
     std::string message;
+    std::string channelOrUser;
+};
+
+struct user_t
+{
+    std::string name;
 };
 
 struct join_t
@@ -42,6 +56,8 @@ public:
     struct msg_t msgData;
     struct cap capData;
     struct join_t joinData;
+    struct nick_t nickData;
+    struct user_t userData;
 };
 
 #endif

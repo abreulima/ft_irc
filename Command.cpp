@@ -22,55 +22,65 @@ std::vector<std::string> getStrings(std::string s, std::string split)
 
 CommandType Command::Parse(std::string data)
 {
-    /* 
+    /*
     Raw data
     */
     std::cout << data << "\n";
-    /*
-    CAP LS 302
-    NICK leschunc
-    USER leschunc 0 * :realname
-    */
-    if (data.compare(0, 6, "CAP LS") == 0)
-    {
-        std::vector<std::string> strings = getStrings(data, "\r\n");
-        if (strings.size() > 2)
-        {
-            std::vector<std::string> substringNick = getStrings(strings[1], " "); //    NICK leschunc
-            capData.nick = substringNick.at(1);
 
-            std::vector<std::string> substringRealname = getStrings(strings[2], " "); //    USER leschunc 0 * :realname
-            capData.name = substringRealname.at(1);
-        }
+    // CAP LS 302
+    if (data.compare(0, 3, "CAP") == 0)
+    {
         return CAP;
     }
 
-    /*
-    * PRIVMSG #general :Hello everyone!
-    */
+    // NICK leschunc
+    else if (data.compare(0, 4, "NICK") == 0)
+    {
+        std::vector<std::string> strings = getStrings(data, " ");
+
+        if (strings.size() > 1)
+            nickData.nick = strings.at(1);
+
+        return NICK;
+    }
+
+    // USER leschunc 0 * :realname
+    else if (data.compare(0, 4, "USER") == 0)
+    {
+        std::vector<std::string> strings = getStrings(data, " ");
+
+        if (strings.size() > 1)
+            userData.name = strings.at(1);
+
+        return USER;
+    }
+
+    // PRIVMSG #general :Hello everyone!
     else if (data.compare(0, 7, "PRIVMSG") == 0)
     {
-        std::string msg = data.substr(data.find(":", 0)); 
+        std::vector<std::string> strings = getStrings(data, " ");
 
-        if (msg.size() > 1)
-            msgData.message = msg;
+        if (strings.size() > 1)
+            msgData.channelOrUser = strings[1];
+
+        size_t colon = data.find(":");
+
+        if (colon != std::string::npos)
+            msgData.message = data.substr(colon + 1);
+
         return MSG;
     }
 
-    /*
-    * JOIN #general
-    */
+    // JOIN #general
     else if (data.compare(0, 4, "JOIN") == 0)
     {
         std::vector<std::string> strings = getStrings(data, " ");
+
         if (strings.size() > 1)
-            joinData.channel = strings.at(1); // #general
+            joinData.channel = strings.at(1);
+
         return JOIN;
     }
-    
+
     return ANOTHER;
 }
-/* 
-PRIVMSG leo hello
-
-*/

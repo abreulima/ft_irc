@@ -34,8 +34,7 @@ private:
     //std::vector<Client> clients;
     //std::map<pollfd_t, Client> clients;
     std::map<int, Client> clients;
-
-    std::vector<Channel> channels;
+    std::map<std::string, Channel> channels;
 
 public:
     Server();
