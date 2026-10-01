@@ -1,27 +1,13 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <string>
-#include <poll.h>
-
-typedef struct pollfd pollfd_t;
-
 class Client
 {
 private:
-	std::string name;
-	std::string nick;
-
+    int _fd;
 public:
-	Client();
-	Client(std::string username, std::string nick);
-	~Client();
-
-	std::string GetName();
-	std::string GetNick();
-	void SetNick(std::string nick);
-	void SetName(std::string nick);
-
+    void SetFd(int fd);
+    int GetFd(int fd);        
 };
 
 #endif
