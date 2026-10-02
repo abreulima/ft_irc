@@ -2,13 +2,8 @@
 
 int main()
 {
-
-    Server serv;
-    
-    if (serv.Init() == false)
-        return 1;
-
-    serv.Run();
-
-    return 0;
+    Server server;
+    if (server.Init() == true)
+        server.Run();
+    return 1;
 }

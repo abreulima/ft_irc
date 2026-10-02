@@ -1,64 +1,57 @@
 #include "Server.hpp"
-#include "Command.hpp"
-#include "Connection.hpp"
+#include "Parser.hpp"
 
-#include <cerrno>
-#include <cstdio>
-
-Server::Server() : isRunning(true)
-{
-    std::memset(buf, 0, BS + 1);
-}
-
-Server::~Server()
-{
-}
+#include <iostream>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <stdio.h>
 
 bool Server::Init()
 {
-    serv_fd = socket(AF_INET, SOCK_STREAM, 0);
+    serverFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    // resolve o problema do endereco em uso
     int opt = 1;
-    setsockopt(serv_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    // setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+    setsockopt(serverFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    sockaddr_in_t serv_addr;
+    sockaddr_in serverAddress;
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    serverAddress.sin_port = htons(6667);
+    serverAddress.sin_family = AF_INET;
 
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(6667);
-    serv_addr.sin_family = AF_INET;
-
-    if (bind(serv_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
+    int res = bind(serverFD, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
+    if (res == -1)
     {
-        perror("DEU RUIM: ");
+        perror("BIND Error");
         return false;
     }
 
-    listen(serv_fd, USER_MAX);
+    listen(serverFD, 1024);
 
-    fds.push_back((pollfd_t){serv_fd, POLLIN, 0});
+    fds.push_back((pollfd){serverFD, POLLIN, 0});
+
+    isRunning = true;
+
     return true;
 }
 
 void Server::Run()
 {
-    int new_cli;
-
     while (isRunning)
     {
         poll(fds.data(), fds.size(), -1);
 
+        // Servidor recebeu algo!
         if (fds.at(0).revents & POLLIN)
         {
-            new_cli = accept(serv_fd, NULL, NULL);
-
-            // remember this usermax
-            if (new_cli >= 0)
+            int connectionFD = accept(serverFD, NULL, NULL);
+            if (connectionFD >= 0)
             {
-                fds.push_back((pollfd_t){new_cli, POLLIN, 0});
-                clients[new_cli] = Client();
-                // buffers[new_cli] = "";
+                fds.push_back((pollfd){connectionFD, POLLIN, 0});
+                // c.SetHostname("42.pt");
+                clients[connectionFD] = Client();
+                clients[connectionFD].SetFD(connectionFD);
+                clients[connectionFD].SetHostname("42.pt");
             }
         }
 
@@ -66,178 +59,94 @@ void Server::Run()
         {
             if (fds.at(i).revents & POLLIN)
             {
-                // magic number review
-                int read_bytes = recv(fds.at(i).fd, buf, BS, 0);
+                char incoming[513];
+                int numBytes = recv(fds.at(i).fd, incoming, 512, 0);
 
-                if (read_bytes <= 0)
+                if (numBytes <= 0)
                 {
                     close(fds.at(i).fd);
-                    fds.erase(fds.begin() + i);
+                    fds.erase(fds.begin() + 1);
                     continue;
                 }
-
                 else
                 {
-                    buf[read_bytes] = 0;
+                    Parser parser;
+                    std::vector<std::string> messages = parser.Split(std::string(incoming, numBytes));
 
-                    // transforma num std::string para trabalhar melhor
-                    std::string incoming(buf);
+                    Client &c = clients[fds.at(i).fd];
 
-                    size_t start = 0;
-                    size_t end;
-
-                    while ((end = incoming.find("\r\n", start)) != std::string::npos)
+                    for (size_t j = 0; j < messages.size(); ++j)
                     {
+                        std::string message = messages.at(j);
+                        CommandType cmd = parser.ProcessLine(message);
 
-                        std::string line = incoming.substr(start, end - start);
+                        std::cout << "Client says: " << message << "\n";
 
-                        Command cmd;
-                        CommandType type = cmd.Parse(line);
-
-                        // Adiciona
-                        if (type == CAP)
+                        // std::cout << "switch: " << (int)parser.commandType << "\n";
+                        switch (cmd)
                         {
-                            if (line.compare(0, 6, "CAP LS") == 0)
-                            {
-                                std::string message = ":42.pt CAP * LS :\r\n";
-                                send(fds.at(i).fd, message.c_str(), message.size(), 0);
-                            }
-                            else if (line == "CAP END")
-                            {
-                                Client &c = clients[fds.at(i).fd];
-
-                                std::string message =
-                                    ":42.pt 001 " + c.GetNick() +
-                                    " :Welcome to the 42.pt IRC Network\r\n";
-
-                                send(fds.at(i).fd, message.c_str(), message.size(), 0);
-                            }
+                        case CAP:
+                            HandleCAP(&c, message);
+                            break;
+                        case NICK:
+                            std::cout << "NICK " << parser.commandNickData.nickname << "\n";
+                            HandleNICK(&c, parser.commandNickData);
+                            c.SetNickname(parser.commandNickData.nickname);
+                            break;
+                        case USER:
+                            std::cout << "NICK " << parser.commandUserData.username << "\n";
+                            c.SetUsername(parser.commandUserData.username);
+                            break;
+                        case PRIVMSG:
+                            break;
+                        case JOIN:
+                            HandleJoin(&c, parser.commandJoinData);
+                            break;
+                        case ERROR:
+                            break;
+                        default:
+                            std::cout << "UNKNOWN";
+                            break;
                         }
-
-                        else if (type == JOIN)
-                        {
-                            // Pega o Client de quem enviou
-                            Client &c = clients[fds.at(i).fd];
-
-                            std::string channelName = cmd.joinData.channel;
-
-                            std::map<std::string, Channel>::iterator it;
-                            it = channels.find(channelName);
-
-                            // canal nao existe
-                            if (it == channels.end())
-                            {
-                                channels.insert(std::make_pair(channelName, Channel(channelName)));
-                                it = channels.find(channelName);
-                            }
-
-                            Channel &channel = it->second;
-
-                            // usuario nao existe no canal
-                            if (!channel.HasMember(&c))
-                            {
-                                channel.AddMember(&c);
-                            }
-
-                            // CONFIRMA O JOIN
-                            //: Nick!username@localhost JOIN #canal
-                            std::string msg =
-                                ":" + c.GetNick() + "!" + c.GetName() +
-                                "@42.pt JOIN " + cmd.joinData.channel + "\r\n";
-
-                            send(fds.at(i).fd, msg.c_str(), msg.size(), 0);
-
-                            // NAMES
-                            std::string names =
-                                ":42.pt 353 " + c.GetNick() +
-                                " = " + channelName +
-                                " :@" + c.GetNick() + "\r\n";
-
-                            send(fds.at(i).fd, names.c_str(), names.size(), 0);
-
-                            // End of NAMES
-                            std::string endNames =
-                                ":42.pt 366 " + c.GetNick() +
-                                " " + channelName +
-                                " :End of /NAMES list.\r\n";
-
-                            send(fds.at(i).fd, endNames.c_str(), endNames.size(), 0);
-
-                            // Debug
-                            std::cout
-                                << "Cliente "
-                                << c.GetName()
-                                << "entrou no canal "
-                                << cmd.joinData.channel
-                                << std::endl;
-                        }
-
-                        else if (type == MSG)
-                        {
-
-                            // Pega o Client de quem enviou
-                            Client &c = clients[fds.at(i).fd];
-
-                            // :Name!usernamek@localhost PRIVMSG #canal> :Mensagem
-                            std::string message = ":" + c.GetName() + "!" + c.GetNick() + "@42.pt " + "PRIVMSG " + cmd.msgData.channelOrUser + " :" + cmd.msgData.message + "\r\n";
-
-                            // Envia a mensagem para todos os outros clientes (aka fds)
-                            for (size_t j = 1; j < fds.size(); j++)
-                            {
-                                if (i != j)
-                                {
-                                    std::string msg = message;
-                                    send(fds.at(j).fd, msg.c_str(), msg.size(), 0);
-                                    std::cout << " " << message << std::endl;
-                                }
-                            }
-
-                            // DEBUG
-                            std::cout
-                                << "Cliente "
-                                << c.GetName()
-                                << "enviou no canal"
-                                << "#general" // ainda nao tem parsing do canal
-                                << "a mensagem: "
-                                << cmd.msgData.message
-                                << std::endl;
-                        }
-
-                        else if (type == NICK)
-                        {
-                            Client &c = clients[fds.at(i).fd];
-                            c.SetNick(cmd.nickData.nick);
-                        }
-
-                        else if (type == USER)
-                        {
-                            Client &c = clients[fds.at(i).fd];
-                            c.SetName(cmd.userData.name);
-                        }
-
-                        else if (type == MODE)
-                        {
-
-                        }
-
-                        else if (type == WHO)
-                        {
-                            
-                        }
-
-                        else
-                        {
-                            std::cout
-                                << "Comando desconhecido: "
-                                << line
-                                << std::endl;
-                        }
-
-                        start = end + 2;
                     }
                 }
+                // incoming[0] = 0;
             }
-            ++i;
+            i++;
         }
     }
+}
+
+void Server::HandleCAP(Client *c, std::string line)
+{
+    (void)c;
+    if (line.compare(0, 6, "CAP LS") == 0)
+    {
+        std::string response = ":42.pt CAP * LS 302 :\r\n";
+        SendToClient(c, response);
+    }
+    else if (line.compare(0, 7, "CAP END") == 0)
+    {
+        std::string response = "42.pt 001 " + c->GetNickname() + " :";
+        response += "Hello dear evaluator!\r\n";
+        SendToClient(c, response);
+    }
+}
+
+void Server::HandleJoin(Client *c, CommandJoinData data)
+{
+    std::string res = c->GetPrefix() + " JOIN " + data.channelName + "\r\n";
+    SendToClient(c, res);
+}
+
+void Server::HandleNICK(Client *c, CommandNickData data)
+{
+    std::string res = c->GetPrefix() + " NICK " + data.nickname + "\r\n";
+    SendToClient(c, res);
+}
+
+void Server::SendToClient(Client *c, std::string message)
+{
+    std::cout << "Server says: " + message << "\n";
+    send(c->GetFD(), message.c_str(), message.size(), 0);
 }

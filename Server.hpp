@@ -1,46 +1,38 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "Client.hpp"
-
-#include <vector>
-#include <map>
-#include <cstring>
-#include <iostream>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <stdbool.h>
-#include <vector>
-#include <cstdlib>
-#include <poll.h>
-
-#define BS 512
-#define USER_MAX 512
-
-typedef struct pollfd pollfd_t;
-typedef struct sockaddr_in sockaddr_in_t;
-
 #include "Channel.hpp"
+#include "Client.hpp"
+#include "Parser.hpp"
+
+#include <map>
+#include <vector>
+#include <poll.h>
 
 class Server
 {
 private:
-    char buf[BS + 1];
-    std::vector<pollfd_t> fds;
-    bool isRunning;
-    int serv_fd;
-    //void polling();
-    //std::vector<Client> clients;
-    //std::map<pollfd_t, Client> clients;
+    std::vector<pollfd> fds;
+    std::map<std::string, Channel*> channels;
     std::map<int, Client> clients;
-    std::map<std::string, Channel> channels;
+    int serverFD;
+    bool isRunning;
+
+    // Handlers
+    void HandleCAP(Client* c, std::string line);
+    void HandleJoin(Client *c, CommandJoinData data);
+    void HandleNICK(Client *c, CommandNickData data);
+    //void HandleJOIN();
+    //void HandlePRIVMSG();
+    //void HandleUSER();
+
+    // Send
+    void SendToClient(Client *c, std::string message);
 
 public:
-    Server();
-    ~Server();
-    bool Init();
     void Run();
+    bool Init();
+    
 };
 
 #endif

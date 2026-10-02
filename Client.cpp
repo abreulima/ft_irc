@@ -1,38 +1,23 @@
-
 #include "Client.hpp"
-#include <stdexcept>
 
-Client::Client(std::string username, std::string nick) : name(username), nick(nick)
+#include <iostream>
+
+
+
+
+int Client::GetFD()                         { return _fd; };
+void Client::SetFD(int value)               { _fd = value; }
+std::string Client::GetUserName()           { return _username; }
+std::string Client::GetNickname()           { return _nickname; }
+std::string Client::GetHostName()           { return _hostname; }
+void Client::SetUsername(std::string value) { _username = value; }
+void Client::SetNickname(std::string value) { _nickname = value; }
+void Client::SetHostname(std::string value) { _hostname = value; }
+
+std::string Client::GetPrefix()
 {
-    
-}
-
-
-Client::Client()
-{
-
-}
-
-Client::~Client()
-{
-
-}
-
-std::string Client::GetName()
-{
-    return name;
-}
-
-std::string Client::GetNick()
-{
-    return nick;
-}
-void Client::SetNick(std::string nick)
-{
-    this->nick = nick;
-}
-
-void Client::SetName(std::string name)
-{
-    this->name = name;
+    //:<nickname>!<username>@<hostname>
+    std::string prefix;
+    prefix = ":" + this->GetNickname() + "!" + this->GetUserName() + "@" + this->GetHostName();
+    return prefix;
 }
