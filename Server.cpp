@@ -90,6 +90,7 @@ void Server::Run()
                             break;
                         case NICK:
                             std::cout << "NICK " << parser.commandNickData.nickname << "\n";
+                            HandleNICK(&c, parser.commandNickData);
                             c.SetNickname(parser.commandNickData.nickname);
                             break;
                         case USER:
@@ -134,16 +135,14 @@ void Server::HandleCAP(Client *c, std::string line)
 
 void Server::HandleJoin(Client *c, CommandJoinData data)
 {
-    std::string res = GetPrefix(c) + " JOIN " + data.channelName + "\r\n";
+    std::string res = c->GetPrefix() + " JOIN " + data.channelName + "\r\n";
     SendToClient(c, res);
 }
 
-std::string Server::GetPrefix(Client *c)
+void Server::HandleNICK(Client *c, CommandNickData data)
 {
-    //:<nickname>!<username>@<hostname>
-    std::string prefix;
-    prefix = ":" + c->GetNickname() + "!" + c->GetUserName() + "@" + c->GetHostName();
-    return prefix;
+    std::string res = c->GetPrefix() + " NICK " + data.nickname + "\r\n";
+    SendToClient(c, res);
 }
 
 void Server::SendToClient(Client *c, std::string message)

@@ -21,13 +21,12 @@ private:
     // Handlers
     void HandleCAP(Client* c, std::string line);
     void HandleJoin(Client *c, CommandJoinData data);
-    //void HandleNICK();
+    void HandleNICK(Client *c, CommandNickData data);
     //void HandleJOIN();
     //void HandlePRIVMSG();
     //void HandleUSER();
 
     // Send
-    std::string GetPrefix(Client *c);
     void SendToClient(Client *c, std::string message);
 
 public:

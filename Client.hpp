@@ -25,6 +25,8 @@ public:
     void SetNickname(std::string value);
     void SetHostname(std::string value);
 
+    std::string GetPrefix();
+
 };
 
 #endif
