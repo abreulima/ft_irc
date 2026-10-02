@@ -82,35 +82,18 @@ void Server::Run()
 
                         std::cout << "Client says: " << message << "\n";
 
-                        // std::cout << "switch: " << (int)parser.commandType << "\n";
                         switch (cmd)
                         {
-                        case CAP:
-                            HandleCAP(&c, message);
-                            break;
-                        case NICK:
-                            std::cout << "NICK " << parser.commandNickData.nickname << "\n";
-                            HandleNICK(&c, parser.commandNickData);
-                            c.SetNickname(parser.commandNickData.nickname);
-                            break;
-                        case USER:
-                            std::cout << "NICK " << parser.commandUserData.username << "\n";
-                            c.SetUsername(parser.commandUserData.username);
-                            break;
-                        case PRIVMSG:
-                            break;
-                        case JOIN:
-                            HandleJoin(&c, parser.commandJoinData);
-                            break;
-                        case ERROR:
-                            break;
-                        default:
-                            std::cout << "UNKNOWN";
-                            break;
+                            case CAP:       HandleCAP(&c, message);                         break;
+                            case NICK:      HandleNICK(&c, parser.commandNickData);         break;
+                            case USER:      c.SetUsername(parser.commandUserData.username); break;
+                            case PRIVMSG:   HandlePrivMsg(&c, parser.commandPrivData);      break;
+                            case JOIN:      HandleJoin(&c, parser.commandJoinData);         break;
+                            case ERROR:                                                     break;
+                            default:        std::cout << "UNKNOWN\n";                       break;
                         }
                     }
                 }
-                // incoming[0] = 0;
             }
             i++;
         }
@@ -119,34 +102,56 @@ void Server::Run()
 
 void Server::HandleCAP(Client *c, std::string line)
 {
-    (void)c;
     if (line.compare(0, 6, "CAP LS") == 0)
     {
-        std::string response = ":42.pt CAP * LS 302 :\r\n";
-        SendToClient(c, response);
+        std::string response = ":42.pt CAP * LS 302 :";
+        SendToClient(*c, response);
     }
     else if (line.compare(0, 7, "CAP END") == 0)
     {
         std::string response = "42.pt 001 " + c->GetNickname() + " :";
         response += "Hello dear evaluator!\r\n";
-        SendToClient(c, response);
+        SendToClient(*c, response);
     }
 }
 
 void Server::HandleJoin(Client *c, CommandJoinData data)
 {
-    std::string res = c->GetPrefix() + " JOIN " + data.channelName + "\r\n";
-    SendToClient(c, res);
+    std::string res = c->GetPrefix() + " JOIN " + data.channel;
+    channels[data.channel] = Channel();
+    channels[data.channel].Add(c, (Role){true});
+    SendToClient(*c, res);
 }
 
 void Server::HandleNICK(Client *c, CommandNickData data)
 {
-    std::string res = c->GetPrefix() + " NICK " + data.nickname + "\r\n";
-    SendToClient(c, res);
+    std::string res = c->GetPrefix() + " NICK " + data.nickname;
+    SendToClient(*c, res);
+    c->SetNickname(data.nickname);
 }
 
-void Server::SendToClient(Client *c, std::string message)
+void Server::HandlePrivMsg(Client *c, CommandPrivData data)
+{
+    std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
+    SendToChannel(channels[data.target], res, *c);
+}
+
+void Server::SendToClient(Client c, std::string message)
 {
     std::cout << "Server says: " + message << "\n";
-    send(c->GetFD(), message.c_str(), message.size(), 0);
+    message += "\r\n";
+    send(c.GetFD(), message.c_str(), message.size(), 0);
+}
+
+void Server::SendToChannel(Channel c, std::string message, Client exclude)
+{
+    std::map<Client *, Role>::iterator it;
+    it = c.clients.begin();
+
+    while (it != c.clients.end())
+    {
+        if (it->first->GetFD() != exclude.GetFD())
+            SendToClient(*it->first, message);
+        it++;
+    }
 }

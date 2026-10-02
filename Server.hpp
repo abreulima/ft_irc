@@ -13,7 +13,7 @@ class Server
 {
 private:
     std::vector<pollfd> fds;
-    std::map<std::string, Channel*> channels;
+    std::map<std::string, Channel> channels;
     std::map<int, Client> clients;
     int serverFD;
     bool isRunning;
@@ -22,12 +22,13 @@ private:
     void HandleCAP(Client* c, std::string line);
     void HandleJoin(Client *c, CommandJoinData data);
     void HandleNICK(Client *c, CommandNickData data);
-    //void HandleJOIN();
+    void HandlePrivMsg(Client *c, CommandPrivData data);
     //void HandlePRIVMSG();
     //void HandleUSER();
 
     // Send
-    void SendToClient(Client *c, std::string message);
+    void SendToClient(Client c, std::string message);
+    void SendToChannel(Channel c, std::string message, Client exclude);
 
 public:
     void Run();

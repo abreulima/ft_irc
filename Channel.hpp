@@ -15,9 +15,10 @@ class Channel
 {
 private:
     std::string _name;
-    std::map<Client*, Role> clients;
 public:
-    
+    void Add(Client *c, Role r);
+    std::map<Client*, Role> clients;
+
 };
 
 #endif

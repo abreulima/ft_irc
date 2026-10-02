@@ -16,13 +16,14 @@ struct CommandNickData
 
 struct CommandJoinData
 {
-    std::string channelName;
+    std::string channel;
 };
 
 struct CommandPrivData
 {
-    std::string channelOrUser;
+    std::string target;
     std::string content;
+    bool isChannel;
 };
 
 enum CommandType
@@ -43,7 +44,6 @@ public:
 
     CommandType ProcessLine(std::string message);
 
-    //
     CommandUserData commandUserData;
     CommandNickData commandNickData;
     CommandJoinData commandJoinData;
