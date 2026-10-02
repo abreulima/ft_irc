@@ -23,7 +23,10 @@ private:
     void HandleJoin(Client *c, CommandJoinData data);
     void HandleNICK(Client *c, CommandNickData data);
     void HandlePrivMsg(Client *c, CommandPrivData data);
+    void HandleWho(Client *c, CommandWhoData data);
+    void HandleMode(Client *c, CommandModeData data);
     void HandleQuit(Client *c);
+
     //void HandlePRIVMSG();
     //void HandleUSER();
 

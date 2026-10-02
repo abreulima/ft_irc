@@ -21,3 +21,4 @@ bool Channel::IsMember(Client *c)
         return true;
     return false;
 }
+

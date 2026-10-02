@@ -43,6 +43,24 @@ CommandType Parser::ProcessLine(std::string message)
 		}
 		return (JOIN);
 	}
+	else if (message.compare(0, 3, "WHO") == 0)
+	{
+		std::vector<std::string> messages = Split(message, " ");
+		if (messages.size() > 1)
+		{
+			commandWhoData.channel = messages.at(1);
+		}
+		return WHO;
+	}
+	else if (message.compare(0, 4, "MODE") == 0)
+	{
+		std::vector<std::string> messages = Split(message, " ");
+		if (messages.size() > 1)
+		{
+			commandModeData.channel = messages.at(1);
+		}
+		return MODE;
+	}
 	else if (message.compare(0, 4, "QUIT") == 0 )
 	{
 		return QUIT;

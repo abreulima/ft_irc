@@ -26,6 +26,16 @@ struct CommandPrivData
     bool isChannel;
 };
 
+struct CommandWhoData
+{
+    std::string channel;
+};
+
+struct CommandModeData
+{
+    std::string channel;
+};
+
 enum CommandType
 {
     ERROR,
@@ -34,6 +44,8 @@ enum CommandType
     USER,
     PRIVMSG,
     JOIN,
+    MODE,
+    WHO,
     QUIT
 };
 
@@ -49,6 +61,8 @@ public:
     CommandNickData commandNickData;
     CommandJoinData commandJoinData;
     CommandPrivData commandPrivData;
+    CommandWhoData commandWhoData;
+    CommandModeData commandModeData;
 };
 
 #endif

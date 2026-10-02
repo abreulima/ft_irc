@@ -90,6 +90,8 @@ void Server::Run()
                             case PRIVMSG:   HandlePrivMsg(&c, parser.commandPrivData);      break;
                             case JOIN:      HandleJoin(&c, parser.commandJoinData);         break;
                             case ERROR:                                                     break;
+                            case WHO:       HandleWho(&c, parser.commandWhoData);           break;
+                            case MODE:      HandleMode(&c, parser.commandModeData);         break;
                             case QUIT:      HandleQuit(&c);
                             default:        std::cout << "UNKNOWN\n";                       break;
                         }
@@ -110,7 +112,7 @@ void Server::HandleCAP(Client *c, std::string line)
     }
     else if (line.compare(0, 7, "CAP END") == 0)
     {
-        std::string response = "42.pt 001 " + c->GetNickname() + " :";
+        std::string response = ":42.pt 001 " + c->GetNickname() + " :";
         response += "Hello dear evaluator!\r\n";
         SendToClient(*c, response);
     }
@@ -129,6 +131,7 @@ void Server::HandleJoin(Client *c, CommandJoinData data)
 
     channels[data.channel].Add(c, role);
     SendToClient(*c, res);
+    SendToChannel(channels[data.channel], res, *c);
 }
 
 void Server::HandleNICK(Client *c, CommandNickData data)
@@ -142,6 +145,46 @@ void Server::HandlePrivMsg(Client *c, CommandPrivData data)
 {
     std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
     SendToChannel(channels[data.target], res, *c);
+}
+
+void Server::HandleWho(Client *c, CommandWhoData data)
+{
+
+    // per user 
+    // :irc.server 352 Alice #Hello alice host1 irc.server Alice H@ :0 Alice
+    // :<server> 352 <requester> <channel> <user> <host> <server> <nick> <flags> :<hopcount> <realname>
+
+    Channel &channel = channels[data.channel];
+    std::map<Client*, Role>::iterator it;
+    it = channel.clients.begin();
+
+    while (it != channel.clients.end())
+    {
+        Client *member = it->first; 
+        Role role = it->second;
+
+        std::string res;
+        res += ":42.pt 352 " + c->GetNickname() + " " + data.channel + " "; // 42.pt 352 Alice  #hello
+        res += member->GetUserName() + " " + member->GetHostName() + " 42.pt " + member->GetNickname() + " ";  
+        res += role.isOperator ? "H@" : "H";
+        res += " :0 realname";
+        it++;
+
+        SendToClient(*c, res);
+    }
+
+    //   :irc.server 315 Alice #Hello :End of /WHO list.
+    std::string res = ":42.pt 315 " + c->GetNickname() + " " + data.channel + " :End of /WHO list.";
+    SendToClient(*c, res);
+
+}
+
+void Server::HandleMode(Client *c, CommandModeData data)
+{
+    // :irc.server 324 <nick> #Hello +nt
+    // 324 RPL_CHANNELMODEIS
+    std::string res = ":42.pt 324 " + c->GetNickname() + " " + data.channel + " +nt";
+    SendToClient(*c, res);
 }
 
 void Server::HandleQuit(Client *c)
@@ -176,3 +219,4 @@ void Server::SendToChannel(Channel c, std::string message, Client exclude)
         it++;
     }
 }
+
