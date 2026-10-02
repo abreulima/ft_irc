@@ -34,6 +34,7 @@ enum CommandType
     USER,
     PRIVMSG,
     JOIN,
+    QUIT
 };
 
 class Parser

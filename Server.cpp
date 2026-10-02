@@ -90,6 +90,7 @@ void Server::Run()
                             case PRIVMSG:   HandlePrivMsg(&c, parser.commandPrivData);      break;
                             case JOIN:      HandleJoin(&c, parser.commandJoinData);         break;
                             case ERROR:                                                     break;
+                            case QUIT:      HandleQuit(&c);
                             default:        std::cout << "UNKNOWN\n";                       break;
                         }
                     }
@@ -119,7 +120,14 @@ void Server::HandleJoin(Client *c, CommandJoinData data)
 {
     std::string res = c->GetPrefix() + " JOIN " + data.channel;
     channels[data.channel] = Channel();
-    channels[data.channel].Add(c, (Role){true});
+
+    Role role;
+    if (channels[data.channel].CountMembers() > 0)
+        role.isOperator = false;
+    else
+        role.isOperator = true;
+
+    channels[data.channel].Add(c, role);
     SendToClient(*c, res);
 }
 
@@ -134,6 +142,19 @@ void Server::HandlePrivMsg(Client *c, CommandPrivData data)
 {
     std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
     SendToChannel(channels[data.target], res, *c);
+}
+
+void Server::HandleQuit(Client *c)
+{
+    std::map<std::string, Channel>::iterator it;
+    it = channels.begin();
+
+    while (it != channels.end())
+    {
+        if (it->second.IsMember(c))
+            it->second.Remove(c);
+        it++;
+    }
 }
 
 void Server::SendToClient(Client c, std::string message)

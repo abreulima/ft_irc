@@ -17,7 +17,11 @@ private:
     std::string _name;
 public:
     void Add(Client *c, Role r);
+    void Remove(Client *c);
     std::map<Client*, Role> clients;
+
+    size_t CountMembers();
+    bool IsMember(Client *c);
 
 };
 

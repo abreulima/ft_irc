@@ -43,6 +43,10 @@ CommandType Parser::ProcessLine(std::string message)
 		}
 		return (JOIN);
 	}
+	else if (message.compare(0, 4, "QUIT") == 0 )
+	{
+		return QUIT;
+	}
 	return (ERROR);
 }
 
