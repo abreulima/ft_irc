@@ -6,6 +6,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <stdio.h>
+#include  <fcntl.h>
+#include <cstdlib>
 
 bool Server::Init()
 {
@@ -18,6 +20,8 @@ bool Server::Init()
     serverAddress.sin_addr.s_addr = INADDR_ANY;
     serverAddress.sin_port = htons(6667);
     serverAddress.sin_family = AF_INET;
+
+    // fcntl(serverFD, F_SETFL, O_NONBLOCK);
 
     int res = bind(serverFD, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
     if (res == -1)
@@ -40,6 +44,7 @@ void Server::Run()
     while (isRunning)
     {
         poll(fds.data(), fds.size(), -1);
+
 
         // Servidor recebeu algo!
         if (fds.at(0).revents & POLLIN)
@@ -80,8 +85,6 @@ void Server::Run()
                         std::string message = messages.at(j);
                         CommandType cmd = parser.ProcessLine(message);
 
-                        std::cout << "Client says: " << message << "\n";
-
                         switch (cmd)
                         {
                             case CAP:       HandleCAP(&c, message);                         break;
@@ -92,7 +95,7 @@ void Server::Run()
                             case ERROR:                                                     break;
                             case WHO:       HandleWho(&c, parser.commandWhoData);           break;
                             case MODE:      HandleMode(&c, parser.commandModeData);         break;
-                            case QUIT:      HandleQuit(&c);
+                            case QUIT:      HandleQuit(&c);                                 break;
                             default:        std::cout << "UNKNOWN\n";                       break;
                         }
                     }
@@ -121,13 +124,19 @@ void Server::HandleCAP(Client *c, std::string line)
 void Server::HandleJoin(Client *c, CommandJoinData data)
 {
     std::string res = c->GetPrefix() + " JOIN " + data.channel;
-    channels[data.channel] = Channel();
+    
+    //Channel *channel;
 
     Role role;
     if (channels[data.channel].CountMembers() > 0)
+    {
         role.isOperator = false;
+    }
     else
+    {        
+        channels[data.channel] = Channel();
         role.isOperator = true;
+    }
 
     channels[data.channel].Add(c, role);
     SendToClient(*c, res);
@@ -202,7 +211,7 @@ void Server::HandleQuit(Client *c)
 
 void Server::SendToClient(Client c, std::string message)
 {
-    std::cout << "Server says: " + message << "\n";
+    //std::cout << "Server says: " + message << "\n";
     message += "\r\n";
     send(c.GetFD(), message.c_str(), message.size(), 0);
 }
@@ -212,11 +221,19 @@ void Server::SendToChannel(Channel c, std::string message, Client exclude)
     std::map<Client *, Role>::iterator it;
     it = c.clients.begin();
 
+    //std::cout << "O cliente " << exclude.GetNickname() + " quer enviar para todos " + message << std::endl; 
+    std::cout << exclude.GetNickname() << " " << message << std::endl;
+
     while (it != c.clients.end())
     {
+ 
+        std::cout << "IT: " << it->first->GetNickname() << "<<<<\n";
         if (it->first->GetFD() != exclude.GetFD())
+        {
+            
+            //std::cout << it->first->GetFD() << "<< fd\n";
             SendToClient(*it->first, message);
+        }
         it++;
     }
 }
-

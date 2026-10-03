@@ -29,8 +29,11 @@ CommandType Parser::ProcessLine(std::string message)
 	else if (message.compare(0, 7, "PRIVMSG") == 0)
 	{
 		std::vector<std::string> messages = Split(message, " ");
-		if (message.size() > 1) { commandPrivData.target = messages.at(1); }
-        commandPrivData.content = message.substr(message.find(":") + 1);
+		if (message.size() > 1)
+		{
+			commandPrivData.target = messages.at(1);
+		}
+		commandPrivData.content = message.substr(message.find(":") + 1);
 		return (PRIVMSG);
 	}
 	// join #channel
@@ -61,7 +64,7 @@ CommandType Parser::ProcessLine(std::string message)
 		}
 		return MODE;
 	}
-	else if (message.compare(0, 4, "QUIT") == 0 )
+	else if (message.compare(0, 4, "QUIT") == 0)
 	{
 		return QUIT;
 	}
@@ -70,8 +73,8 @@ CommandType Parser::ProcessLine(std::string message)
 
 std::vector<std::string> Parser::Split(std::string lines)
 {
-	size_t	start;
-	size_t	pos;
+	size_t start;
+	size_t pos;
 
 	std::string split = "\r\n";
 	std::vector<std::string> res;
@@ -81,14 +84,15 @@ std::vector<std::string> Parser::Split(std::string lines)
 		res.push_back(lines.substr(start, pos - start));
 		start = pos + split.size();
 	}
-	res.push_back(lines.substr(start));
+	//res.push_back(lines.substr(start));
+	// std::cout << res.size() << "\n";
 	return (res);
 }
 
 std::vector<std::string> Parser::Split(std::string lines, std::string split)
 {
-	size_t	start;
-	size_t	pos;
+	size_t start;
+	size_t pos;
 
 	std::vector<std::string> res;
 	start = 0;
