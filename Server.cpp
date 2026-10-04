@@ -11,229 +11,317 @@
 
 bool Server::Init()
 {
-    serverFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	serverFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    int opt = 1;
-    setsockopt(serverFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+	int opt = 1;
+	setsockopt(serverFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    sockaddr_in serverAddress;
-    serverAddress.sin_addr.s_addr = INADDR_ANY;
-    serverAddress.sin_port = htons(6667);
-    serverAddress.sin_family = AF_INET;
+	sockaddr_in serverAddress;
+	serverAddress.sin_addr.s_addr = INADDR_ANY;
+	serverAddress.sin_port = htons(6667);
+	serverAddress.sin_family = AF_INET;
 
-    // fcntl(serverFD, F_SETFL, O_NONBLOCK);
+	// fcntl(serverFD, F_SETFL, O_NONBLOCK);
 
-    int res = bind(serverFD, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
-    if (res == -1)
-    {
-        perror("BIND Error");
-        return false;
-    }
+	int res = bind(serverFD, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
+	if (res == -1)
+	{
+		perror("BIND Error");
+		return false;
+	}
 
-    listen(serverFD, 1024);
+	listen(serverFD, 1024);
 
-    fds.push_back((pollfd){serverFD, POLLIN, 0});
+	fds.push_back((pollfd){serverFD, POLLIN, 0});
 
-    isRunning = true;
+	isRunning = true;
 
-    return true;
+	return true;
 }
 
 void Server::Run()
 {
-    while (isRunning)
-    {
-        poll(fds.data(), fds.size(), -1);
+	while (isRunning)
+	{
+		poll(fds.data(), fds.size(), -1);
 
 
-        // Servidor recebeu algo!
-        if (fds.at(0).revents & POLLIN)
-        {
-            int connectionFD = accept(serverFD, NULL, NULL);
-            if (connectionFD >= 0)
-            {
-                fds.push_back((pollfd){connectionFD, POLLIN, 0});
-                // c.SetHostname("42.pt");
-                clients[connectionFD] = Client();
-                clients[connectionFD].SetFD(connectionFD);
-                clients[connectionFD].SetHostname("42.pt");
-            }
-        }
+		// Servidor recebeu algo!
+		if (fds.at(0).revents & POLLIN)
+		{
+			int connectionFD = accept(serverFD, NULL, NULL);
+			if (connectionFD >= 0)
+			{
+				fds.push_back((pollfd){connectionFD, POLLIN, 0});
+				// c.SetHostname("42.pt");
+				clients[connectionFD] = Client();
+				clients[connectionFD].SetFD(connectionFD);
+				clients[connectionFD].SetHostname("42.pt");
+			}
+		}
 
-        for (size_t i = 1; i < fds.size();)
-        {
-            if (fds.at(i).revents & POLLIN)
-            {
-                char incoming[513];
-                int numBytes = recv(fds.at(i).fd, incoming, 512, 0);
+		for (size_t i = 1; i < fds.size();)
+		{
+			if (fds.at(i).revents & POLLIN)
+			{
+				char incoming[513];
+				int numBytes = recv(fds.at(i).fd, incoming, 512, 0);
 
-                if (numBytes <= 0)
-                {
-                    close(fds.at(i).fd);
-                    fds.erase(fds.begin() + 1);
-                    continue;
-                }
-                else
-                {
-                    Parser parser;
-                    std::vector<std::string> messages = parser.Split(std::string(incoming, numBytes));
+				if (numBytes <= 0)
+				{
+					close(fds.at(i).fd);
+					fds.erase(fds.begin() + 1);
+					continue;
+				}
+				else
+				{
+					Parser parser;
+					std::vector<std::string> messages = parser.Split(std::string(incoming, numBytes));
 
-                    Client &c = clients[fds.at(i).fd];
+					Client &c = clients[fds.at(i).fd];
 
-                    for (size_t j = 0; j < messages.size(); ++j)
-                    {
-                        std::string message = messages.at(j);
-                        CommandType cmd = parser.ProcessLine(message);
+					for (size_t j = 0; j < messages.size(); ++j)
+					{
+						std::string message = messages.at(j);
+						CommandType cmd = parser.ProcessLine(message);
 
-                        switch (cmd)
-                        {
-                            case CAP:       HandleCAP(&c, message);                         break;
-                            case NICK:      HandleNICK(&c, parser.commandNickData);         break;
-                            case USER:      c.SetUsername(parser.commandUserData.username); break;
-                            case PRIVMSG:   HandlePrivMsg(&c, parser.commandPrivData);      break;
-                            case JOIN:      HandleJoin(&c, parser.commandJoinData);         break;
-                            case ERROR:                                                     break;
-                            case WHO:       HandleWho(&c, parser.commandWhoData);           break;
-                            case MODE:      HandleMode(&c, parser.commandModeData);         break;
-                            case QUIT:      HandleQuit(&c);                                 break;
-                            default:        std::cout << "UNKNOWN\n";                       break;
-                        }
-                    }
-                }
-            }
-            i++;
-        }
-    }
+						switch (cmd)
+						{
+							case CAP:       HandleCAP(&c, message);                         break;
+							case NICK:      HandleNICK(&c, parser.commandNickData);         break;
+							case USER:      c.SetUsername(parser.commandUserData.username); break;
+							case PRIVMSG:   HandlePrivMsg(&c, parser.commandPrivData);      break;
+							case JOIN:      HandleJoin(&c, parser.commandJoinData);         break;
+							case KICK:      HandleKick(&c, parser.commandJoinData);			break;
+							case ERROR:                                                     break;
+							case WHO:       HandleWho(&c, parser.commandWhoData);           break;
+							case MODE:      HandleMode(&c, parser.commandModeData);         break;
+							case QUIT:      HandleQuit(&c);                                 break;
+							default:        std::cout << "UNKNOWN\n";                       break;
+						}
+					}
+				}
+			}
+			i++;
+		}
+	}
 }
 
 void Server::HandleCAP(Client *c, std::string line)
 {
-    if (line.compare(0, 6, "CAP LS") == 0)
-    {
-        std::string response = ":42.pt CAP * LS 302 :";
-        SendToClient(*c, response);
-    }
-    else if (line.compare(0, 7, "CAP END") == 0)
-    {
-        std::string response = ":42.pt 001 " + c->GetNickname() + " :";
-        response += "Hello dear evaluator!\r\n";
-        SendToClient(*c, response);
-    }
+	if (line.compare(0, 6, "CAP LS") == 0)
+	{
+		std::string response = ":42.pt CAP * LS 302 :";
+		SendToClient(*c, response);
+	}
+	else if (line.compare(0, 7, "CAP END") == 0)
+	{
+		std::string response = ":42.pt 001 " + c->GetNickname() + " :";
+		response += "Hello dear evaluator!\r\n";
+		SendToClient(*c, response);
+	}
 }
 
 void Server::HandleJoin(Client *c, CommandJoinData data)
 {
-    std::string res = c->GetPrefix() + " JOIN " + data.channel;
+	std::string res = c->GetPrefix() + " JOIN " + data.channel;
+	
+	//Channel *channel;
+
+	Role role;
+	if (channels[data.channel].CountMembers() > 0)
+	{
+		role.isOperator = false;
+	}
+	else
+	{        
+		channels[data.channel] = Channel();
+		role.isOperator = true;
+	}
+
+	channels[data.channel].Add(c, role);
+	SendToClient(*c, res);
+	SendToChannel(channels[data.channel], res, *c);
+}
+
+void Server::HandleKick(Client *c, CommandPrivData data)
+{
+
+
+	/* 
+	tipo como se fosse primeiro encontrar 
+	um user pelo nome dele pra mandar uma dm mas 
+	que vai kickar ele na vdd e isso?
+	
+	qnd a gente fez kick ele deu aviso pro user?
+	tem que testar no libera ne ou perguntar pra ia 
+	ou ver no protocolo o que faz
+
+	lawl
+
+	entra no libera #somogays
+
+	to blocked 
+
+	nao to conseguindo conectar no libera uai
+
+	deve ser meu nick podre
+    // x? deve ser
+    // sim, sim ou sim
+    // 
+    // acho que nao, ele simplesmente nao computa (eu acho)
+    Sim, 
+
+    o kick dever se algo assim /KICK #canal membro
     
-    //Channel *channel;
+    */
 
-    Role role;
-    if (channels[data.channel].CountMembers() > 0)
-    {
-        role.isOperator = false;
-    }
-    else
-    {        
-        channels[data.channel] = Channel();
-        role.isOperator = true;
-    }
 
-    channels[data.channel].Add(c, role);
-    SendToClient(*c, res);
-    SendToChannel(channels[data.channel], res, *c);
+	
+	Channel channel = channels["canal"];
+    Role role = channel.clients[c];
+
+    if (!role.isOperator)
+        return ;
+        
+    // procura o usuario data.kickedUser 
+    // SendToClient(*c, "XAU");
+
 }
 
 void Server::HandleNICK(Client *c, CommandNickData data)
 {
-    std::string res = c->GetPrefix() + " NICK " + data.nickname;
-    SendToClient(*c, res);
-    c->SetNickname(data.nickname);
+	std::string res = c->GetPrefix() + " NICK " + data.nickname;
+	SendToClient(*c, res);
+	c->SetNickname(data.nickname);
 }
 
 void Server::HandlePrivMsg(Client *c, CommandPrivData data)
 {
-    std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
-    SendToChannel(channels[data.target], res, *c);
+	std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
+
+
+	std::cout << "#@@@ " << c->GetNickname() << " " << data.target << " " << data.content << std::endl; // ocorre
+
+
+	if (data.target.size() > 0)
+	
+	{
+		if (data.target.at(0) == '#')
+		{
+			SendToChannel(channels[data.target], res, *c); 
+		}
+		else
+		{
+			std::map<int, Client>::iterator it; // yes maam
+			it = clients.begin(); // acertei 
+			
+			std::cout << "#@@@ " << c->GetNickname() << " " << data.target << " " << data.content << std::endl; // nao ocorre (com meu user)
+
+
+			// entra la, abri o servidor pelo gdb
+
+			/* talvez, vou reiniciar o servidor
+
+			porque deu sigpipe??
+			so pq eu mandei msg privada?
+
+			ylapa-2a01-11-9210-50f0-edf6-a7d0-d7a8-9f09.run.pinggy-free.link:35769
+			*/
+
+			std::cout << "dm " << c->GetNickname() << " quer tc com (" << data.target  << ")" << std::endl;
+
+			while (it != clients.end())
+			{
+				// it->first (int), it->second (cliente)
+				if (it->second.GetNickname().compare(data.target) == 0)
+				{
+					SendToClient(it->second, res); // tenho que enviar para o cliente res, nao apenas o conteudo da msg
+				}
+				it++;
+			}
+		}
+	}
 }
 
 void Server::HandleWho(Client *c, CommandWhoData data)
 {
 
-    // per user 
-    // :irc.server 352 Alice #Hello alice host1 irc.server Alice H@ :0 Alice
-    // :<server> 352 <requester> <channel> <user> <host> <server> <nick> <flags> :<hopcount> <realname>
+	// per user 
+	// :irc.server 352 Alice #Hello alice host1 irc.server Alice H@ :0 Alice
+	// :<server> 352 <requester> <channel> <user> <host> <server> <nick> <flags> :<hopcount> <realname>
 
-    Channel &channel = channels[data.channel];
-    std::map<Client*, Role>::iterator it;
-    it = channel.clients.begin();
+	Channel &channel = channels[data.channel];
+	std::map<Client*, Role>::iterator it;
+	it = channel.clients.begin();
 
-    while (it != channel.clients.end())
-    {
-        Client *member = it->first; 
-        Role role = it->second;
+	while (it != channel.clients.end())
+	{
+		Client *member = it->first; 
+		Role role = it->second;
 
-        std::string res;
-        res += ":42.pt 352 " + c->GetNickname() + " " + data.channel + " "; // 42.pt 352 Alice  #hello
-        res += member->GetUserName() + " " + member->GetHostName() + " 42.pt " + member->GetNickname() + " ";  
-        res += role.isOperator ? "H@" : "H";
-        res += " :0 realname";
-        it++;
+		std::string res;
+		res += ":42.pt 352 " + c->GetNickname() + " " + data.channel + " "; // 42.pt 352 Alice  #hello
+		res += member->GetUserName() + " " + member->GetHostName() + " 42.pt " + member->GetNickname() + " ";  
+		res += role.isOperator ? "H@" : "H";
+		res += " :0 realname";
+		it++;
 
-        SendToClient(*c, res);
-    }
+		SendToClient(*c, res);
+	}
 
-    //   :irc.server 315 Alice #Hello :End of /WHO list.
-    std::string res = ":42.pt 315 " + c->GetNickname() + " " + data.channel + " :End of /WHO list.";
-    SendToClient(*c, res);
+	//   :irc.server 315 Alice #Hello :End of /WHO list.
+	std::string res = ":42.pt 315 " + c->GetNickname() + " " + data.channel + " :End of /WHO list.";
+	SendToClient(*c, res);
 
 }
 
 void Server::HandleMode(Client *c, CommandModeData data)
 {
-    // :irc.server 324 <nick> #Hello +nt
-    // 324 RPL_CHANNELMODEIS
-    std::string res = ":42.pt 324 " + c->GetNickname() + " " + data.channel + " +nt";
-    SendToClient(*c, res);
+	// :irc.server 324 <nick> #Hello +nt
+	// 324 RPL_CHANNELMODEIS
+	std::string res = ":42.pt 324 " + c->GetNickname() + " " + data.channel + " +nt";
+	SendToClient(*c, res);
 }
 
 void Server::HandleQuit(Client *c)
 {
-    std::map<std::string, Channel>::iterator it;
-    it = channels.begin();
+	std::map<std::string, Channel>::iterator it;
+	it = channels.begin();
 
-    while (it != channels.end())
-    {
-        if (it->second.IsMember(c))
-            it->second.Remove(c);
-        it++;
-    }
+	while (it != channels.end())
+	{
+		if (it->second.IsMember(c))
+			it->second.Remove(c);
+		it++;
+	}
 }
 
 void Server::SendToClient(Client c, std::string message)
 {
-    //std::cout << "Server says: " + message << "\n";
-    message += "\r\n";
-    send(c.GetFD(), message.c_str(), message.size(), 0);
+	std::cout << "Server says: " + message << "\n";
+	message += "\r\n";
+	send(c.GetFD(), message.c_str(), message.size(), 0);
 }
 
 void Server::SendToChannel(Channel c, std::string message, Client exclude)
 {
-    std::map<Client *, Role>::iterator it;
-    it = c.clients.begin();
+	std::map<Client *, Role>::iterator it;
+	it = c.clients.begin();
 
-    //std::cout << "O cliente " << exclude.GetNickname() + " quer enviar para todos " + message << std::endl; 
-    std::cout << exclude.GetNickname() << " " << message << std::endl;
+	std::cout << "O cliente " << exclude.GetNickname() + " quer enviar para todos " + message << std::endl; 
+	std::cout << exclude.GetNickname() << " " << message << std::endl;
 
-    while (it != c.clients.end())
-    {
+	while (it != c.clients.end())
+	{
  
-        std::cout << "IT: " << it->first->GetNickname() << "<<<<\n";
-        if (it->first->GetFD() != exclude.GetFD())
-        {
-            
-            //std::cout << it->first->GetFD() << "<< fd\n";
-            SendToClient(*it->first, message);
-        }
-        it++;
-    }
+		std::cout << "IT: " << it->first->GetNickname() << "<<<<\n";
+		if (it->first->GetFD() != exclude.GetFD())
+		{
+			
+			//std::cout << it->first->GetFD() << "<< fd\n";
+			SendToClient(*it->first, message);
+		}
+		it++;
+	}
 }

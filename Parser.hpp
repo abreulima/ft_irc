@@ -44,6 +44,7 @@ enum CommandType
     USER,
     PRIVMSG,
     JOIN,
+    KICK,
     MODE,
     WHO,
     QUIT

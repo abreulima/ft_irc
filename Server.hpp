@@ -21,6 +21,7 @@ private:
     // Handlers
     void HandleCAP(Client* c, std::string line);
     void HandleJoin(Client *c, CommandJoinData data);
+    void HandleKick(Client *c, CommandPrivData data)
     void HandleNICK(Client *c, CommandNickData data);
     void HandlePrivMsg(Client *c, CommandPrivData data);
     void HandleWho(Client *c, CommandWhoData data);

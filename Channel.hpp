@@ -1,28 +1,27 @@
 #ifndef CHANNEL_HPP
-#define CHANNEL_HPP
+# define CHANNEL_HPP
 
-#include "Client.hpp"
+# include "Client.hpp"
+# include <map>
+# include <string>
 
-#include <string>
-#include <map>
-
-struct Role
+struct		Role
 {
-    bool isOperator;
+	bool	isOperator;
 };
 
 class Channel
 {
-private:
-    std::string _name;
-public:
-    void Add(Client *c, Role r);
-    void Remove(Client *c);
-    std::map<Client*, Role> clients;
+  private:
+	std::string _name;
 
-    size_t CountMembers();
-    bool IsMember(Client *c);
+  public:
+	void Add(Client *c, Role r);
+	void Remove(Client *c);
+	std::map<Client *, Role> clients;
 
+	size_t CountMembers();
+	bool IsMember(Client *c);
 };
 
 #endif

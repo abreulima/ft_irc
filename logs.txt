@@ -1,0 +1,8 @@
+0x00007ffff792c13d in __libc_send (fd=4, buf=0x7fffffffd0b0, len=12, flags=0) at ../sysdeps/unix/sysv/linux/send.c:28
+warning: 28     ../sysdeps/unix/sysv/linux/send.c: No such file or directory
+(gdb) bt
+#0  0x00007ffff792c13d in __libc_send (fd=4, buf=0x7fffffffd0b0, len=12, flags=0) at ../sysdeps/unix/sysv/linux/send.c:28
+#1  0x000055555555a07f in Server::SendToClient (this=0x7fffffffd580, c=..., message="vc existe?\r\n") at Server.cpp:245
+#2  0x0000555555559158 in Server::HandlePrivMsg (this=0x7fffffffd580, c=0x55555557d8b8, data=...) at Server.cpp:180
+#3  0x0000555555558000 in Server::Run (this=0x7fffffffd580) at Server.cpp:93
+#4  0x0000555555556802 in main () at Main.cpp:7
