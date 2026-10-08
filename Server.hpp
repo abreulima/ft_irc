@@ -11,33 +11,34 @@
 
 class Server
 {
-private:
-    std::vector<pollfd> fds;
-    std::map<std::string, Channel> channels;
-    std::map<int, Client> clients;
-    int serverFD;
-    bool isRunning;
+    private:
 
-    // Handlers
-    void HandleCAP(Client* c, std::string line);
-    void HandleJoin(Client *c, Command::Join data);
-    void HandleKick(Client *c, Command::Kick data);
-    void HandleNICK(Client *c, Command::Nick data);
-    void HandlePrivMsg(Client *c, Command::Priv data);
-    void HandleWho(Client *c, Command::Who data);
-    void HandleMode(Client *c, Command::Mode data);
-    void HandleQuit(Client *c);
+        std::vector<pollfd> fds;
+        std::map<std::string, Channel> channels;
+        std::map<int, Client> clients;
+        int serverFD;
+        bool isRunning;
 
-    //void HandlePRIVMSG();
-    //void HandleUSER();
+        // Handlers
+        void HandleCAP(Client* c, std::string line);
+        void HandleJoin(Client *c, Command::Join data);
+        void HandleKick(Client *c, Command::Kick data);
+        void HandleNick(Client *c, Command::Nick data);
+        void HandlePrivMsg(Client *c, Command::Priv data);
+        void HandleWho(Client *c, Command::Who data);
+        void HandleMode(Client *c, Command::Mode data);
+        void HandleQuit(Client *c);
 
-    // Send
-    void SendToClient(Client c, std::string message);
-    void SendToChannel(Channel c, std::string message, Client exclude);
+        //void HandlePRIVMSG();
+        //void HandleUSER();
 
-public:
-    void Run();
-    bool Init();
+        // Send
+        void SendToClient(Client c, std::string message);
+        void SendToChannel(Channel c, std::string message, Client exclude);
+
+    public:
+        void Run();
+        bool Init();
     
 };
 

@@ -36,7 +36,17 @@ Type Parser::ProcessLine(std::string message)
 		priv.content = message.substr(message.find(":") + 1);
 		return PRIVMSG;
 	}
-	// join #channel
+	else if (message.compare(0, 4, "KICK") == 0)
+	{
+		std::vector<std::string> messages = Split(message, " ");
+		if (message.size() >= 3)
+		{
+			kick.channel = messages.at(1);
+			kick.nickname = messages.at(2);
+		}
+		kick.reason = message.substr(message.find(":") + 1);
+		return KICK;
+	}
 	else if (message.compare(0, 4, "JOIN") == 0)
 	{
 		std::vector<std::string> messages = Split(message, " ");

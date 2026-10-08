@@ -26,6 +26,7 @@ namespace Command
     {
         std::string channel;
         std::string nickname;
+        std::string reason;
     };
 
     struct Priv

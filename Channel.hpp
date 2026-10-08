@@ -22,6 +22,9 @@ class Channel
 
 	size_t CountMembers();
 	bool IsMember(Client *c);
+
+	Client *GetUserByNickname(std::string nickname);
+
 };
 
 #endif

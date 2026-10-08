@@ -11,12 +11,13 @@ void Client::SetUsername(std::string value) { _username = value; }
 void Client::SetNickname(std::string value) { _nickname = value; }
 void Client::SetHostname(std::string value) { _hostname = value; }
 
-std::string Client::GetPrefix()
+std::string Client::GetPrefix() //:<nickname>!<username>@<hostname>
 {
-	//:<nickname>!<username>@<hostname>
-	std::string prefix;
-	prefix = ":" + this->GetNickname() + "!" + this->GetUserName() + "@" + this->GetHostName();
-	return prefix;
+	return std::string(
+		":" + this->GetNickname()
+		+ "!" + this->GetUserName()
+		+ "@" + this->GetHostName()
+	);
 }
 
 /* 

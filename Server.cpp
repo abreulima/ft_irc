@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <stdio.h>
-#include  <fcntl.h>
+#include <fcntl.h>
 #include <cstdlib>
 
 bool Server::Init()
@@ -53,10 +53,9 @@ void Server::Run()
 			if (connectionFD >= 0)
 			{
 				fds.push_back((pollfd){connectionFD, POLLIN, 0});
-				// c.SetHostname("42.pt");
 				clients[connectionFD] = Client();
 				clients[connectionFD].SetFD(connectionFD);
-				clients[connectionFD].SetHostname("42.pt");
+				clients[connectionFD].SetHostname("user.host"); //Change to User IP.
 			}
 		}
 
@@ -87,17 +86,17 @@ void Server::Run()
 
 						switch (cmd)
 						{
-							case CAP:       HandleCAP(&c, message);				break;
-							case NICK:      HandleNICK(&c, parser.nick);			break;
+							case CAP:       HandleCAP(&c, message);					break;
+							case NICK:      HandleNick(&c, parser.nick);			break;
 							case USER:      c.SetUsername(parser.user.username);	break;
-							case PRIVMSG:   HandlePrivMsg(&c, parser.priv);		break;
+							case PRIVMSG:   HandlePrivMsg(&c, parser.priv);			break;
 							case JOIN:      HandleJoin(&c, parser.join);			break;
 							case KICK:      HandleKick(&c, parser.kick);			break;
-							case ERROR:											break;
+							case ERROR:												break;
 							case WHO:       HandleWho(&c, parser.who);				break;
 							case MODE:      HandleMode(&c, parser.mode);			break;
-							case QUIT:      HandleQuit(&c);						break;
-							default:	std::cout << "UNKNOWN\n";							break;
+							case QUIT:      HandleQuit(&c);							break;
+							default:		std::cout << "UNKNOWN\n";				break;
 						}
 					}
 				}
@@ -147,50 +146,41 @@ void Server::HandleJoin(Client *c, Command::Join data)
 void Server::HandleKick(Client *c, Command::Kick data)
 {
 
-	(void)data;
+	Channel& channel = channels[data.channel];
 
-	/* 
-	tipo como se fosse primeiro encontrar 
-	um user pelo nome dele pra mandar uma dm mas 
-	que vai kickar ele na vdd e isso?
+    Role role = channel.clients.at(c);
 	
-	qnd a gente fez kick ele deu aviso pro user?
-	tem que testar no libera ne ou perguntar pra ia 
-	ou ver no protocolo o que faz
-
-	lawl
-
-	entra no libera #somogays
-
-	to blocked 
-
-	nao to conseguindo conectar no libera uai
-
-	deve ser meu nick podre
-    // x? deve ser
-    // sim, sim ou sim
-    // 
-    // acho que nao, ele simplesmente nao computa (eu acho)
-    Sim, 
-
-    o kick dever se algo assim /KICK #canal membro
-    
-    */
-
-
-	
-	Channel channel = channels["canal"];
-    Role role = channel.clients[c];
-
+	// 482 is ERR_CHANOPRIVSNEEDED.
     if (!role.isOperator)
+	{
+		std::string not_operator = ":42.pt 482 " + c->GetNickname() + " " + data.nickname + " :403 Forbidden - Not an Operator";
+		SendToClient(*c, not_operator);
         return ;
-        
-    // procura o usuario data.kickedUser 
-    // SendToClient(*c, "XAU");
+	}
 
+	Client* kicked = channel.GetUserByNickname(data.nickname);
+	// 401 is ERR_NOSUCHNICK
+	if (!kicked)
+	{
+		std::string no_such_nick = ":42.pt 401 " + c->GetNickname() + " " + data.nickname + " :404 User Not Found";
+		SendToClient(*c, no_such_nick);
+		return;
+		// :<server> 401 <requesting_nick> <target> :No such nick/channel
+	}
+	
+
+	data.reason = data.reason.empty() ? c->GetNickname() : data.reason;
+
+	std::string res = c->GetPrefix() + " KICK " + data.channel + " " + data.nickname + " :" + data.reason;
+	SendToClient(*c, res);
+	SendToChannel(channel, res, *c);
+
+	if (kicked)
+
+	channel.Remove(kicked);
 }
 
-void Server::HandleNICK(Client *c, Command::Nick data)
+void Server::HandleNick(Client *c, Command::Nick data)
 {
 	std::string res = c->GetPrefix() + " NICK " + data.nickname;
 	SendToClient(*c, res);
@@ -200,10 +190,6 @@ void Server::HandleNICK(Client *c, Command::Nick data)
 void Server::HandlePrivMsg(Client *c, Command::Priv data)
 {
 	std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
-
-
-	std::cout << "#@@@ " << c->GetNickname() << " " << data.target << " " << data.content << std::endl; // ocorre
-
 
 	if (data.target.size() > 0)
 	
@@ -215,20 +201,7 @@ void Server::HandlePrivMsg(Client *c, Command::Priv data)
 		else
 		{
 			std::map<int, Client>::iterator it; // yes maam
-			it = clients.begin(); // acertei 
-			
-			std::cout << "#@@@ " << c->GetNickname() << " " << data.target << " " << data.content << std::endl; // nao ocorre (com meu user)
-
-
-			// entra la, abri o servidor pelo gdb
-
-			/* talvez, vou reiniciar o servidor
-
-			porque deu sigpipe??
-			so pq eu mandei msg privada?
-
-			ylapa-2a01-11-9210-50f0-edf6-a7d0-d7a8-9f09.run.pinggy-free.link:35769
-			*/
+			it = clients.begin(); // acertei
 
 			std::cout << "dm " << c->GetNickname() << " quer tc com (" << data.target  << ")" << std::endl;
 
@@ -245,12 +218,11 @@ void Server::HandlePrivMsg(Client *c, Command::Priv data)
 	}
 }
 
+// per user 
+// :irc.server 352 Alice #Hello alice host1 irc.server Alice H@ :0 Alice
+// :<server> 352 <requester> <channel> <user> <host> <server> <nick> <flags> :<hopcount> <realname>
 void Server::HandleWho(Client *c, Command::Who data)
 {
-
-	// per user 
-	// :irc.server 352 Alice #Hello alice host1 irc.server Alice H@ :0 Alice
-	// :<server> 352 <requester> <channel> <user> <host> <server> <nick> <flags> :<hopcount> <realname>
 
 	Channel &channel = channels[data.channel];
 	std::map<Client*, Role>::iterator it;

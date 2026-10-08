@@ -22,3 +22,19 @@ bool Channel::IsMember(Client *c)
     return false;
 }
 
+Client *Channel::GetUserByNickname(std::string nickname)
+{
+    std::map<Client*, Role>::iterator it;
+	it = clients.begin();
+
+	while (it != clients.end())
+	{
+		Client *member = it->first; 
+		
+        if (member->GetNickname() == nickname)
+            return member;
+	}
+    return NULL;
+}
+
+
