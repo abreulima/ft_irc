@@ -83,20 +83,20 @@ void Server::Run()
 					for (size_t j = 0; j < messages.size(); ++j)
 					{
 						std::string message = messages.at(j);
-						Command::Type cmd = parser.ProcessLine(message);
+						Type cmd = parser.ProcessLine(message);
 
 						switch (cmd)
 						{
-							case Command::CAP:       HandleCAP(&c, message);				break;
-							case Command::NICK:      HandleNICK(&c, parser.Nick);			break;
-							case Command::USER:      c.SetUsername(parser.User.username);	break;
-							case Command::PRIVMSG:   HandlePrivMsg(&c, parser.Priv);		break;
-							case Command::JOIN:      HandleJoin(&c, parser.Join);			break;
-							case Command::KICK:      HandleKick(&c, parser.Nick);			break;
-							case Command::ERROR:											break;
-							case Command::WHO:       HandleWho(&c, parser.Who);				break;
-							case Command::MODE:      HandleMode(&c, parser.Mode);			break;
-							case Command::QUIT:      HandleQuit(&c);						break;
+							case CAP:       HandleCAP(&c, message);				break;
+							case NICK:      HandleNICK(&c, parser.nick);			break;
+							case USER:      c.SetUsername(parser.user.username);	break;
+							case PRIVMSG:   HandlePrivMsg(&c, parser.priv);		break;
+							case JOIN:      HandleJoin(&c, parser.join);			break;
+							case KICK:      HandleKick(&c, parser.kick);			break;
+							case ERROR:											break;
+							case WHO:       HandleWho(&c, parser.who);				break;
+							case MODE:      HandleMode(&c, parser.mode);			break;
+							case QUIT:      HandleQuit(&c);						break;
 							default:	std::cout << "UNKNOWN\n";							break;
 						}
 					}
@@ -144,9 +144,10 @@ void Server::HandleJoin(Client *c, Command::Join data)
 	SendToChannel(channels[data.channel], res, *c);
 }
 
-void Server::HandleKick(Client *c, Command::Priv data)
+void Server::HandleKick(Client *c, Command::Kick data)
 {
 
+	(void)data;
 
 	/* 
 	tipo como se fosse primeiro encontrar 

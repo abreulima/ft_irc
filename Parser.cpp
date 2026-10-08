@@ -1,7 +1,7 @@
 #include "Parser.hpp"
 #include <iostream>
 
-CommandType Parser::ProcessLine(std::string message)
+Type Parser::ProcessLine(std::string message)
 {
 	// std::cout << "<" << message << ">inside of the process<\n";
 	if (message.compare(0, 3, "CAP") == 0)
@@ -13,28 +13,28 @@ CommandType Parser::ProcessLine(std::string message)
 		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() > 1)
 		{
-			commandNickData.nickname = messages.at(1);
+			nick.nickname = messages.at(1);
 		}
-		return (NICK);
+		return NICK;
 	}
 	else if (message.compare(0, 4, "USER") == 0)
 	{
 		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() > 1)
 		{
-			commandUserData.username = messages.at(1);
+			user.username = messages.at(1);
 		}
-		return (USER);
+		return USER;
 	}
 	else if (message.compare(0, 7, "PRIVMSG") == 0)
 	{
 		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() > 1)
 		{
-			commandPrivData.target = messages.at(1);
+			priv.target = messages.at(1);
 		}
-		commandPrivData.content = message.substr(message.find(":") + 1);
-		return (PRIVMSG);
+		priv.content = message.substr(message.find(":") + 1);
+		return PRIVMSG;
 	}
 	// join #channel
 	else if (message.compare(0, 4, "JOIN") == 0)
@@ -42,16 +42,16 @@ CommandType Parser::ProcessLine(std::string message)
 		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() > 1)
 		{
-			commandJoinData.channel = messages.at(1);
+			join.channel = messages.at(1);
 		}
-		return (JOIN);
+		return JOIN;
 	}
 	else if (message.compare(0, 3, "WHO") == 0)
 	{
 		std::vector<std::string> messages = Split(message, " ");
 		if (messages.size() > 1)
 		{
-			commandWhoData.channel = messages.at(1);
+			who.channel = messages.at(1);
 		}
 		return WHO;
 	}
@@ -60,7 +60,7 @@ CommandType Parser::ProcessLine(std::string message)
 		std::vector<std::string> messages = Split(message, " ");
 		if (messages.size() > 1)
 		{
-			commandModeData.channel = messages.at(1);
+			mode.channel = messages.at(1);
 		}
 		return MODE;
 	}

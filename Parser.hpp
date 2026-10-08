@@ -45,21 +45,21 @@ namespace Command
         std::string channel;
     };
 
-    enum Type
-    {
-        ERROR,
-        CAP,
-        NICK,
-        USER,
-        PRIVMSG,
-        JOIN,
-        KICK,
-        MODE,
-        WHO,
-        QUIT
-    };
-
 }
+
+enum Type
+{
+    ERROR,
+    CAP,
+    NICK,
+    USER,
+    PRIVMSG,
+    JOIN,
+    KICK,
+    MODE,
+    WHO,
+    QUIT
+};
 
 class Parser
 {
@@ -67,14 +67,14 @@ public:
     std::vector<std::string> Split(std::string mesessages);
     std::vector<std::string> Split(std::string lines, std::string split);
 
-    Command::Type ProcessLine(std::string message);
-    Command::User User;
-    Command::Nick Nick;
-    Command::Nick Kick;
-    Command::Join Join;
-    Command::Priv Priv;
-    Command::Who Who;
-    Command::Mode Mode;
+    Type ProcessLine(std::string message);
+    Command::User user;
+    Command::Nick nick;
+    Command::Kick kick;
+    Command::Join join;
+    Command::Priv priv;
+    Command::Who who;
+    Command::Mode mode;
 };
 
 #endif
