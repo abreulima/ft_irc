@@ -4,51 +4,62 @@
 #include <string>
 #include <vector>
 
-struct CommandUserData
+namespace Command
 {
-    std::string username;
-};
 
-struct CommandNickData
-{
-    std::string nickname;
-};
+    struct User
+    {
+        std::string username;
+    };
 
-struct CommandJoinData
-{
-    std::string channel;
-};
+    struct Nick
+    {
+        std::string nickname;
+    };
 
-struct CommandPrivData
-{
-    std::string target;
-    std::string content;
-    bool isChannel;
-};
+    struct Join
+    {
+        std::string channel;
+    };
 
-struct CommandWhoData
-{
-    std::string channel;
-};
+    struct Kick
+    {
+        std::string channel;
+        std::string nickname;
+    };
 
-struct CommandModeData
-{
-    std::string channel;
-};
+    struct Priv
+    {
+        std::string target;
+        std::string content;
+        bool isChannel;
+    };
 
-enum CommandType
-{
-    ERROR,
-    CAP,
-    NICK,
-    USER,
-    PRIVMSG,
-    JOIN,
-    KICK,
-    MODE,
-    WHO,
-    QUIT
-};
+    struct Who
+    {
+        std::string channel;
+    };
+
+    struct Mode
+    {
+        std::string channel;
+    };
+
+    enum Type
+    {
+        ERROR,
+        CAP,
+        NICK,
+        USER,
+        PRIVMSG,
+        JOIN,
+        KICK,
+        MODE,
+        WHO,
+        QUIT
+    };
+
+}
 
 class Parser
 {
@@ -56,14 +67,14 @@ public:
     std::vector<std::string> Split(std::string mesessages);
     std::vector<std::string> Split(std::string lines, std::string split);
 
-    CommandType ProcessLine(std::string message);
-
-    CommandUserData commandUserData;
-    CommandNickData commandNickData;
-    CommandJoinData commandJoinData;
-    CommandPrivData commandPrivData;
-    CommandWhoData commandWhoData;
-    CommandModeData commandModeData;
+    Command::Type ProcessLine(std::string message);
+    Command::User User;
+    Command::Nick Nick;
+    Command::Nick Kick;
+    Command::Join Join;
+    Command::Priv Priv;
+    Command::Who Who;
+    Command::Mode Mode;
 };
 
 #endif

@@ -83,21 +83,21 @@ void Server::Run()
 					for (size_t j = 0; j < messages.size(); ++j)
 					{
 						std::string message = messages.at(j);
-						CommandType cmd = parser.ProcessLine(message);
+						Command::Type cmd = parser.ProcessLine(message);
 
 						switch (cmd)
 						{
-							case CAP:       HandleCAP(&c, message);                         break;
-							case NICK:      HandleNICK(&c, parser.commandNickData);         break;
-							case USER:      c.SetUsername(parser.commandUserData.username); break;
-							case PRIVMSG:   HandlePrivMsg(&c, parser.commandPrivData);      break;
-							case JOIN:      HandleJoin(&c, parser.commandJoinData);         break;
-							case KICK:      HandleKick(&c, parser.commandJoinData);			break;
-							case ERROR:                                                     break;
-							case WHO:       HandleWho(&c, parser.commandWhoData);           break;
-							case MODE:      HandleMode(&c, parser.commandModeData);         break;
-							case QUIT:      HandleQuit(&c);                                 break;
-							default:        std::cout << "UNKNOWN\n";                       break;
+							case Command::CAP:       HandleCAP(&c, message);				break;
+							case Command::NICK:      HandleNICK(&c, parser.Nick);			break;
+							case Command::USER:      c.SetUsername(parser.User.username);	break;
+							case Command::PRIVMSG:   HandlePrivMsg(&c, parser.Priv);		break;
+							case Command::JOIN:      HandleJoin(&c, parser.Join);			break;
+							case Command::KICK:      HandleKick(&c, parser.Nick);			break;
+							case Command::ERROR:											break;
+							case Command::WHO:       HandleWho(&c, parser.Who);				break;
+							case Command::MODE:      HandleMode(&c, parser.Mode);			break;
+							case Command::QUIT:      HandleQuit(&c);						break;
+							default:	std::cout << "UNKNOWN\n";							break;
 						}
 					}
 				}
@@ -122,7 +122,7 @@ void Server::HandleCAP(Client *c, std::string line)
 	}
 }
 
-void Server::HandleJoin(Client *c, CommandJoinData data)
+void Server::HandleJoin(Client *c, Command::Join data)
 {
 	std::string res = c->GetPrefix() + " JOIN " + data.channel;
 	
@@ -144,7 +144,7 @@ void Server::HandleJoin(Client *c, CommandJoinData data)
 	SendToChannel(channels[data.channel], res, *c);
 }
 
-void Server::HandleKick(Client *c, CommandPrivData data)
+void Server::HandleKick(Client *c, Command::Priv data)
 {
 
 
@@ -189,14 +189,14 @@ void Server::HandleKick(Client *c, CommandPrivData data)
 
 }
 
-void Server::HandleNICK(Client *c, CommandNickData data)
+void Server::HandleNICK(Client *c, Command::Nick data)
 {
 	std::string res = c->GetPrefix() + " NICK " + data.nickname;
 	SendToClient(*c, res);
 	c->SetNickname(data.nickname);
 }
 
-void Server::HandlePrivMsg(Client *c, CommandPrivData data)
+void Server::HandlePrivMsg(Client *c, Command::Priv data)
 {
 	std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
 
@@ -244,7 +244,7 @@ void Server::HandlePrivMsg(Client *c, CommandPrivData data)
 	}
 }
 
-void Server::HandleWho(Client *c, CommandWhoData data)
+void Server::HandleWho(Client *c, Command::Who data)
 {
 
 	// per user 
@@ -276,7 +276,7 @@ void Server::HandleWho(Client *c, CommandWhoData data)
 
 }
 
-void Server::HandleMode(Client *c, CommandModeData data)
+void Server::HandleMode(Client *c, Command::Mode data)
 {
 	// :irc.server 324 <nick> #Hello +nt
 	// 324 RPL_CHANNELMODEIS
