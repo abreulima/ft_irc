@@ -162,28 +162,59 @@ void Server::HandleJoin(Client *c, Command::Join data)
 	}
 
 	channels[data.channel].Add(c, role);
-	SendToClient(*c, res);
-	SendToChannel(channels[data.channel], res, c);
+	SendToChannel(channels[data.channel], res, 0);
+
+	// this is ugly
+
+	Channel &channel = channels[data.channel];
+	std::string nickList;
+
+	for (std::map<Client *, Role>::iterator it(channel.clients.begin()); it != channel.clients.end(); it++)
+	{
+		Client *member = it->first;
+		Role role = it->second;
+
+		nickList += role.isOperator ? "@" : "";
+		nickList += member->GetNickname() + " ";
+	}
+
+	SendToChannel(channels[data.channel], std::string("") + ":42.pt 353 " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
+
+	SendToChannel(channels[data.channel], std::string("") + ":42.pt 366 " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
+
+	if (channels[data.channel].getTopic().size())
+
+	{
+		std::string topic = ":42.pt " + RPL_TOPIC + " " + c->GetNickname() + " " + data.channel + " :" + channels[data.channel].getTopic();
+		SendToClient(*c, topic);
+	}
 }
 
 void Server::HandleTopic(Client *c, Command::Topic data)
 {
 	// if channel doesnt exists it segfaults
 
-	// if (channels.at(data.channel))
+	if (channels.find(data.channel) == channels.end())
+	{
+		std::string res;
+
+		res = ":42.pt 403 " + c->GetNickname() + " " + data.channel + " :No such channel";
+		SendToChannel(channels[data.channel], res, NULL);
+	}
 
 	std::cout << "channel name " << data.channel << std::endl;
 	// std::cout << data.channel << std::endl;
-	if (channels.at(data.channel).clients.at(c).isOperator)
+	if (channels.at(data.channel).clients.at(c).isOperator ||
+		channels.at(data.channel).modes.isTopicOpOnly == false)
 	{
-		std::cout << "sent to client\n";
 		std::string res;
 		res = ":42.pt 332 " + c->GetNickname() + " " + data.channel + " :" + data.topic;
 		SendToChannel(channels[data.channel], res, NULL);
+		channels.at(data.channel).setTopic(data.topic);
 	}
 	else
 	{
-		std::cout << "is not operator\n";
+		std::cerr << "is not operator\n";
 	}
 }
 

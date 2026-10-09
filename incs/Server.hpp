@@ -9,6 +9,8 @@
 #include <vector>
 #include <poll.h>
 
+#define RPL_TOPIC std::string("332")
+
 class Server
 {
     private:
