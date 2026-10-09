@@ -35,7 +35,7 @@ class Server
 
         // Send
         void SendToClient(Client c, std::string message);
-        void SendToChannel(Channel c, std::string message, Client exclude);
+        void SendToChannel(Channel c, std::string message, Client *exclude);
 
     public:
         void Run();

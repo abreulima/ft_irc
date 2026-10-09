@@ -49,6 +49,8 @@ namespace Command
     struct Topic
     {
         std::string topic;
+        std::string channel;
+        bool        shouldChange;
     };
 
 }

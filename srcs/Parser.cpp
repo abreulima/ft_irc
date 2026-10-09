@@ -80,6 +80,20 @@ Type Parser::ProcessLine(std::string message)
 	}
 	else if (message.compare(0, 5, "TOPIC") == 0)
 	{
+		std::cout << message << std::endl;
+		std::vector<std::string> messages = Split(message, " ");
+		if (messages.size() == 2)
+		{
+			topic.channel = messages.at(1);
+			topic.shouldChange = false;
+			// topic.topic = message.substr(message.find(':', 0));
+		}
+		else if (messages.size() > 2)
+		{
+			topic.shouldChange = true;
+			topic.channel = messages.at(1);
+			topic.topic = message.substr(message.find(':', 0) + 1);
+		}
 		return TOPIC;
 	}
 	return (ERROR);
@@ -98,8 +112,8 @@ std::vector<std::string> Parser::Split(std::string lines)
 		res.push_back(lines.substr(start, pos - start));
 		start = pos + split.size();
 	}
-	//res.push_back(lines.substr(start));
-	// std::cout << res.size() << "\n";
+	// res.push_back(lines.substr(start));
+	//  std::cout << res.size() << "\n";
 	return (res);
 }
 

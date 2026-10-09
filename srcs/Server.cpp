@@ -45,7 +45,6 @@ void Server::Run()
 	{
 		poll(fds.data(), fds.size(), -1);
 
-
 		// Servidor recebeu algo!
 		if (fds.at(0).revents & POLLIN)
 		{
@@ -55,7 +54,7 @@ void Server::Run()
 				fds.push_back((pollfd){connectionFD, POLLIN, 0});
 				clients[connectionFD] = Client();
 				clients[connectionFD].SetFD(connectionFD);
-				clients[connectionFD].SetHostname("user.host"); //Change to User IP.
+				clients[connectionFD].SetHostname("user.host"); // Change to User IP.
 			}
 		}
 
@@ -86,18 +85,41 @@ void Server::Run()
 
 						switch (cmd)
 						{
-							case CAP:		HandleCAP(&c, message);					break;
-							case NICK:		HandleNick(&c, parser.nick);			break;
-							case USER:		c.SetUsername(parser.user.username);	break;
-							case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
-							case JOIN:		HandleJoin(&c, parser.join);			break;
-							case KICK:		HandleKick(&c, parser.kick);			break;
-							case TOPIC:		HandleTopic(&c, parser.topic);			break;
-							case ERROR:												break;
-							case WHO:		 HandleWho(&c, parser.who);				break;
-							case MODE:		HandleMode(&c, parser.mode);			break;
-							case QUIT:		HandleQuit(&c);							break;
-							default:		std::cout << "UNKNOWN\n";				break;
+						case CAP:
+							HandleCAP(&c, message);
+							break;
+						case NICK:
+							HandleNick(&c, parser.nick);
+							break;
+						case USER:
+							c.SetUsername(parser.user.username);
+							break;
+						case PRIVMSG:
+							HandlePrivMsg(&c, parser.priv);
+							break;
+						case JOIN:
+							HandleJoin(&c, parser.join);
+							break;
+						case KICK:
+							HandleKick(&c, parser.kick);
+							break;
+						case TOPIC:
+							HandleTopic(&c, parser.topic);
+							break;
+						case ERROR:
+							break;
+						case WHO:
+							HandleWho(&c, parser.who);
+							break;
+						case MODE:
+							HandleMode(&c, parser.mode);
+							break;
+						case QUIT:
+							HandleQuit(&c);
+							break;
+						default:
+							std::cout << "UNKNOWN\n";
+							break;
 						}
 					}
 				}
@@ -125,8 +147,8 @@ void Server::HandleCAP(Client *c, std::string line)
 void Server::HandleJoin(Client *c, Command::Join data)
 {
 	std::string res = c->GetPrefix() + " JOIN " + data.channel;
-	
-	//Channel *channel;
+
+	// Channel *channel;
 
 	Role role;
 	if (channels[data.channel].CountMembers() > 0)
@@ -134,39 +156,53 @@ void Server::HandleJoin(Client *c, Command::Join data)
 		role.isOperator = false;
 	}
 	else
-	{        
+	{
 		channels[data.channel] = Channel();
 		role.isOperator = true;
 	}
 
 	channels[data.channel].Add(c, role);
 	SendToClient(*c, res);
-	SendToChannel(channels[data.channel], res, *c);
+	SendToChannel(channels[data.channel], res, c);
 }
 
 void Server::HandleTopic(Client *c, Command::Topic data)
 {
-	/* "hello, ima placeholder to handle TOPIC\n" */
-	(void)c;
-	std::cout << data.topic << "\n";
+	// if channel doesnt exists it segfaults
+
+	// if (channels.at(data.channel))
+
+	std::cout << "channel name " << data.channel << std::endl;
+	// std::cout << data.channel << std::endl;
+	if (channels.at(data.channel).clients.at(c).isOperator)
+	{
+		std::cout << "sent to client\n";
+		std::string res;
+		res = ":42.pt 332 " + c->GetNickname() + " " + data.channel + " :" + data.topic;
+		SendToChannel(channels[data.channel], res, NULL);
+	}
+	else
+	{
+		std::cout << "is not operator\n";
+	}
 }
 
 void Server::HandleKick(Client *c, Command::Kick data)
 {
 
-	Channel& channel = channels[data.channel];
+	Channel &channel = channels[data.channel];
 
-    Role role = channel.clients.at(c);
-	
+	Role role = channel.clients.at(c);
+
 	// 482 is ERR_CHANOPRIVSNEEDED.
-    if (!role.isOperator)
+	if (!role.isOperator)
 	{
 		std::string not_operator = ":42.pt 482 " + c->GetNickname() + " " + data.nickname + " :403 Forbidden - Not an Operator";
 		SendToClient(*c, not_operator);
-        return ;
+		return;
 	}
 
-	Client* kicked = channel.GetUserByNickname(data.nickname);
+	Client *kicked = channel.GetUserByNickname(data.nickname);
 	// 401 is ERR_NOSUCHNICK
 	if (!kicked)
 	{
@@ -175,17 +211,16 @@ void Server::HandleKick(Client *c, Command::Kick data)
 		return;
 		// :<server> 401 <requesting_nick> <target> :No such nick/channel
 	}
-	
 
 	data.reason = data.reason.empty() ? c->GetNickname() : data.reason;
 
 	std::string res = c->GetPrefix() + " KICK " + data.channel + " " + data.nickname + " :" + data.reason;
 	SendToClient(*c, res);
-	SendToChannel(channel, res, *c);
+	SendToChannel(channel, res, c);
 
 	if (kicked)
 
-	channel.Remove(kicked);
+		channel.Remove(kicked);
 }
 
 void Server::HandleNick(Client *c, Command::Nick data)
@@ -200,18 +235,18 @@ void Server::HandlePrivMsg(Client *c, Command::Priv data)
 	std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
 
 	if (data.target.size() > 0)
-	
+
 	{
 		if (data.target.at(0) == '#')
 		{
-			SendToChannel(channels[data.target], res, *c); 
+			SendToChannel(channels[data.target], res, c);
 		}
 		else
 		{
 			std::map<int, Client>::iterator it; // yes maam
-			it = clients.begin(); // acertei
+			it = clients.begin();				// acertei
 
-			std::cout << "dm " << c->GetNickname() << " quer tc com (" << data.target  << ")" << std::endl;
+			std::cout << "dm " << c->GetNickname() << " quer tc com (" << data.target << ")" << std::endl;
 
 			while (it != clients.end())
 			{
@@ -226,24 +261,24 @@ void Server::HandlePrivMsg(Client *c, Command::Priv data)
 	}
 }
 
-// per user 
+// per user
 // :irc.server 352 Alice #Hello alice host1 irc.server Alice H@ :0 Alice
 // :<server> 352 <requester> <channel> <user> <host> <server> <nick> <flags> :<hopcount> <realname>
 void Server::HandleWho(Client *c, Command::Who data)
 {
 
 	Channel &channel = channels[data.channel];
-	std::map<Client*, Role>::iterator it;
+	std::map<Client *, Role>::iterator it;
 	it = channel.clients.begin();
 
 	while (it != channel.clients.end())
 	{
-		Client *member = it->first; 
+		Client *member = it->first;
 		Role role = it->second;
 
 		std::string res;
 		res += ":42.pt 352 " + c->GetNickname() + " " + data.channel + " "; // 42.pt 352 Alice  #hello
-		res += member->GetUserName() + " " + member->GetHostName() + " 42.pt " + member->GetNickname() + " ";  
+		res += member->GetUserName() + " " + member->GetHostName() + " 42.pt " + member->GetNickname() + " ";
 		res += role.isOperator ? "H@" : "H";
 		res += " :0 realname";
 		it++;
@@ -254,7 +289,6 @@ void Server::HandleWho(Client *c, Command::Who data)
 	//   :irc.server 315 Alice #Hello :End of /WHO list.
 	std::string res = ":42.pt 315 " + c->GetNickname() + " " + data.channel + " :End of /WHO list.";
 	SendToClient(*c, res);
-
 }
 
 void Server::HandleMode(Client *c, Command::Mode data)
@@ -285,24 +319,17 @@ void Server::SendToClient(Client c, std::string message)
 	send(c.GetFD(), message.c_str(), message.size(), 0);
 }
 
-void Server::SendToChannel(Channel c, std::string message, Client exclude)
+void Server::SendToChannel(Channel c, std::string message, Client *exclude)
 {
 	std::map<Client *, Role>::iterator it;
 	it = c.clients.begin();
 
-	std::cout << "O cliente " << exclude.GetNickname() + " quer enviar para todos " + message << std::endl; 
-	std::cout << exclude.GetNickname() << " " << message << std::endl;
-
 	while (it != c.clients.end())
 	{
- 
-		std::cout << "IT: " << it->first->GetNickname() << "<<<<\n";
-		if (it->first->GetFD() != exclude.GetFD())
-		{
-			
-			//std::cout << it->first->GetFD() << "<< fd\n";
+		if (exclude == NULL)
 			SendToClient(*it->first, message);
-		}
+		else if (it->first->GetFD() != exclude->GetFD())
+			SendToClient(*it->first, message);
 		it++;
 	}
 }
