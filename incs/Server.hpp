@@ -23,6 +23,7 @@ class Server
         void HandleCAP(Client* c, std::string line);
         void HandleJoin(Client *c, Command::Join data);
         void HandleKick(Client *c, Command::Kick data);
+        void HandleTopic(Client *c, Command::Topic data);
         void HandleNick(Client *c, Command::Nick data);
         void HandlePrivMsg(Client *c, Command::Priv data);
         void HandleWho(Client *c, Command::Who data);

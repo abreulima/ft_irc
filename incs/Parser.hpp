@@ -46,6 +46,11 @@ namespace Command
         std::string channel;
     };
 
+    struct Topic
+    {
+        std::string topic;
+    };
+
 }
 
 enum Type
@@ -57,6 +62,7 @@ enum Type
     PRIVMSG,
     JOIN,
     KICK,
+    TOPIC,
     MODE,
     WHO,
     QUIT
@@ -72,6 +78,7 @@ public:
     Command::User user;
     Command::Nick nick;
     Command::Kick kick;
+    Command::Topic topic;
     Command::Join join;
     Command::Priv priv;
     Command::Who who;

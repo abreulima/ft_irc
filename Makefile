@@ -26,8 +26,8 @@ fclean: clean
 
 re: fclean all
 
-g: re
-	valgrind --quiet ./$(NAME)
+go: all
+	./$(NAME)
 
 -include $(DEPS)
 

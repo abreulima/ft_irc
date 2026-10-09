@@ -78,6 +78,10 @@ Type Parser::ProcessLine(std::string message)
 	{
 		return QUIT;
 	}
+	else if (message.compare(0, 5, "TOPIC") == 0)
+	{
+		return TOPIC;
+	}
 	return (ERROR);
 }
 

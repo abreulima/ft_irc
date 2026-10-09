@@ -86,16 +86,17 @@ void Server::Run()
 
 						switch (cmd)
 						{
-							case CAP:       HandleCAP(&c, message);					break;
-							case NICK:      HandleNick(&c, parser.nick);			break;
-							case USER:      c.SetUsername(parser.user.username);	break;
-							case PRIVMSG:   HandlePrivMsg(&c, parser.priv);			break;
-							case JOIN:      HandleJoin(&c, parser.join);			break;
-							case KICK:      HandleKick(&c, parser.kick);			break;
+							case CAP:		HandleCAP(&c, message);					break;
+							case NICK:		HandleNick(&c, parser.nick);			break;
+							case USER:		c.SetUsername(parser.user.username);	break;
+							case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
+							case JOIN:		HandleJoin(&c, parser.join);			break;
+							case KICK:		HandleKick(&c, parser.kick);			break;
+							case TOPIC:		HandleTopic(&c, parser.topic);			break;
 							case ERROR:												break;
-							case WHO:       HandleWho(&c, parser.who);				break;
-							case MODE:      HandleMode(&c, parser.mode);			break;
-							case QUIT:      HandleQuit(&c);							break;
+							case WHO:		 HandleWho(&c, parser.who);				break;
+							case MODE:		HandleMode(&c, parser.mode);			break;
+							case QUIT:		HandleQuit(&c);							break;
 							default:		std::cout << "UNKNOWN\n";				break;
 						}
 					}
@@ -141,6 +142,13 @@ void Server::HandleJoin(Client *c, Command::Join data)
 	channels[data.channel].Add(c, role);
 	SendToClient(*c, res);
 	SendToChannel(channels[data.channel], res, *c);
+}
+
+void Server::HandleTopic(Client *c, Command::Topic data)
+{
+	/* "hello, ima placeholder to handle TOPIC\n" */
+	(void)c;
+	std::cout << data.topic << "\n";
 }
 
 void Server::HandleKick(Client *c, Command::Kick data)
