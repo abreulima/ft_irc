@@ -36,3 +36,22 @@ Client *Channel::GetUserByNickname(std::string nickname)
 	}
     return NULL;
 }
+
+// +itkl pass 10
+std::string Channel::GetModesString()
+{
+    std::string res = "+";
+    res += modes.isInviteOnly ? "i" : "";
+    res += modes.isTopicOpOnly ? "t" : "";
+    res += !modes.password.empty() ? "k" : "";
+    res += modes.limit != 0 ? "l" : "";
+    
+    if (!modes.password.empty() || modes.limit != 0 )
+    {
+        res += " ";
+        res += modes.password + " ";
+        res += modes.limit;
+    };
+    
+    return res;
+}

@@ -9,7 +9,7 @@ struct Modes
 {
 	bool isInviteOnly;
 	bool isTopicOpOnly;
-	std::string password;
+	std::string password; 
 	int limit;
 };
 
@@ -34,24 +34,7 @@ class Channel
 	Client *GetUserByNickname(std::string nickname);
 
 	Modes modes;
-
-	// +itkl pass 10
-	std::string GetModesString()
-	{
-		std::string res = "+";
-		res += modes.isInviteOnly ? "i" : "";
-		res += modes.isTopicOpOnly ? "t" : "";
-		res += !modes.password.empty() ? "k" : "";
-		res += modes.limit != 0 ? "l" : "";
-		
-		if (!modes.password.empty() || modes.limit != 0 )
-		{
-			res += " ";
-			res += modes.password + " ";
-			res += modes.limit;
-		};
-	}
-
+	std::string GetModesString();
 
 };
 
