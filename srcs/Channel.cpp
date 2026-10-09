@@ -36,5 +36,3 @@ Client *Channel::GetUserByNickname(std::string nickname)
 	}
     return NULL;
 }
-
-

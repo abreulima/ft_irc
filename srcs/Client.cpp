@@ -24,5 +24,4 @@ std::string Client::GetPrefix() //:<nickname>!<username>@<hostname>
 
 bybxs-95-92-143-217.run.pinggy-free.link:42205
 
-
 */
