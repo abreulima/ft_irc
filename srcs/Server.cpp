@@ -12,6 +12,7 @@
 bool Server::Init()
 {
 	serverFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	// TODO: Check socket return for errors
 
 	int opt = 1;
 	setsockopt(serverFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -31,6 +32,7 @@ bool Server::Init()
 	}
 
 	listen(serverFD, 1024);
+	// TODO: Check listen return for errors
 
 	fds.push_back((pollfd){serverFD, POLLIN, 0});
 
@@ -76,32 +78,39 @@ void Server::Run()
 					Parser parser;
 					std::vector<std::string> messages = parser.Split(std::string(incoming, numBytes));
 
-					Client &c = clients[fds.at(i).fd];
-
-					for (size_t j = 0; j < messages.size(); ++j)
-					{
-						std::string message = messages.at(j);
-						Type cmd = parser.ProcessLine(message);
-
-						switch (cmd)
-						{
-						case CAP:		HandleCAP(&c, message);					break;
-						case NICK:		HandleNick(&c, parser.nick);			break;
-						case USER:		c.SetUsername(parser.user.username);	break;
-						case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
-						case JOIN:		HandleJoin(&c, parser.join);			break;
-						case KICK:		HandleKick(&c, parser.kick);			break;
-						case TOPIC:		HandleTopic(&c, parser.topic);			break;
-						case ERROR:												break;
-						case WHO:		HandleWho(&c, parser.who);				break;
-						case MODE:		HandleMode(&c, parser.mode);			break;
-						case QUIT:		HandleQuit(&c, parser.quit);							break;
-						default:		std::cout << "UNKNOWN\n";				break;
-						}
-					}
+					handleCommands(i, messages);
 				}
 			}
 			i++;
+		}
+	}
+}
+
+void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
+{
+	Parser parser;
+
+	Client &c = clients[fds.at(fd_id).fd];
+
+	for (size_t j = 0; j < messages.size(); ++j)
+	{
+		std::string message = messages.at(j);
+		Type cmd = parser.ProcessLine(message);
+
+		switch (cmd)
+		{
+		case CAP:		HandleCAP(&c, message);					break;
+		case NICK:		HandleNick(&c, parser.nick);			break;
+		case USER:		c.SetUsername(parser.user.username);	break;
+		case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
+		case JOIN:		HandleJoin(&c, parser.join);			break;
+		case KICK:		HandleKick(&c, parser.kick);			break;
+		case TOPIC:		HandleTopic(&c, parser.topic);			break;
+		case ERROR:												break;
+		case WHO:		HandleWho(&c, parser.who);				break;
+		case MODE:		HandleMode(&c, parser.mode);			break;
+		case QUIT:		HandleQuit(&c, parser.quit);							break;
+		default:		std::cout << "UNKNOWN\n";				break;
 		}
 	}
 }
@@ -174,7 +183,7 @@ void Server::HandleTopic(Client *c, Command::Topic data)
 		std::string res;
 		res = ":42.pt 403 " + c->GetNickname() + " " + data.channel + " :No such channel";
 		SendToChannel(channels[data.channel], res, NULL);
-		return ;
+		return;
 	}
 
 	if (channels.at(data.channel).clients.at(c).isOperator ||
