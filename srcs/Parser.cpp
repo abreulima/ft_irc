@@ -3,7 +3,8 @@
 
 Type Parser::ProcessLine(std::string message)
 {
-	// std::cout << "<" << message << ">inside of the process<\n";
+	std::cout << "Client Says: " << message << std::endl;
+
 	if (message.compare(0, 3, "CAP") == 0)
 	{
 		return (CAP);
@@ -67,11 +68,41 @@ Type Parser::ProcessLine(std::string message)
 	}
 	else if (message.compare(0, 4, "MODE") == 0)
 	{
+
+		int numArgs = 0;
 		std::vector<std::string> messages = Split(message, " ");
-		if (messages.size() > 1)
+		// mode
+		if (messages.size() == 2)
 		{
 			mode.channel = messages.at(1);
+			return MODE;
 		}
+
+		// 0     1     2   3
+		// mode #canal +o ivan
+		if (messages.size() > 2)
+		{
+			mode.modes = messages.at(2);
+			for (size_t i = 0; i < messages.at(2).size(); i++)
+			{
+				if (messages.at(2)[i] == 'k' ||
+					messages.at(2)[i] == 'l' || 
+					messages.at(2)[i] == 'o')
+				{
+					numArgs++;
+				}
+			}
+		}
+	
+		if (numArgs > messages.size() - 3)
+			return ERROR;
+
+		/*
+		for (size_t i = 3; i < nu)
+		{
+
+		}
+		*/
 		return MODE;
 	}
 	else if (message.compare(0, 4, "QUIT") == 0)
@@ -86,7 +117,6 @@ Type Parser::ProcessLine(std::string message)
 		{
 			topic.channel = messages.at(1);
 			topic.shouldChange = false;
-			// topic.topic = message.substr(message.find(':', 0));
 		}
 		else if (messages.size() > 2)
 		{

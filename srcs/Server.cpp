@@ -139,7 +139,7 @@ void Server::HandleCAP(Client *c, std::string line)
 	else if (line.compare(0, 7, "CAP END") == 0)
 	{
 		std::string response = ":42.pt 001 " + c->GetNickname() + " :";
-		response += "Hello dear evaluator!\r\n";
+		response += "Hello dear evaluator!";
 		SendToClient(*c, response);
 	}
 }
@@ -175,15 +175,14 @@ void Server::HandleJoin(Client *c, Command::Join data)
 		Role role = it->second;
 
 		nickList += role.isOperator ? "@" : "";
-		nickList += member->GetNickname() + " ";
+		nickList += member->GetNickname();
+		nickList += " ";
 	}
 
 	SendToChannel(channels[data.channel], std::string("") + ":42.pt 353 " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
-
 	SendToChannel(channels[data.channel], std::string("") + ":42.pt 366 " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
 
-	if (channels[data.channel].getTopic().size())
-
+	if (channels[data.channel].getTopic().size() > 0)
 	{
 		std::string topic = ":42.pt " + RPL_TOPIC + " " + c->GetNickname() + " " + data.channel + " :" + channels[data.channel].getTopic();
 		SendToClient(*c, topic);
@@ -193,17 +192,14 @@ void Server::HandleJoin(Client *c, Command::Join data)
 void Server::HandleTopic(Client *c, Command::Topic data)
 {
 	// if channel doesnt exists it segfaults
-
 	if (channels.find(data.channel) == channels.end())
 	{
 		std::string res;
-
 		res = ":42.pt 403 " + c->GetNickname() + " " + data.channel + " :No such channel";
 		SendToChannel(channels[data.channel], res, NULL);
+		return ;
 	}
 
-	std::cout << "channel name " << data.channel << std::endl;
-	// std::cout << data.channel << std::endl;
 	if (channels.at(data.channel).clients.at(c).isOperator ||
 		channels.at(data.channel).modes.isTopicOpOnly == false)
 	{
@@ -250,7 +246,6 @@ void Server::HandleKick(Client *c, Command::Kick data)
 	SendToChannel(channel, res, c);
 
 	if (kicked)
-
 		channel.Remove(kicked);
 }
 

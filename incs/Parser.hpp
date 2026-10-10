@@ -44,6 +44,9 @@ namespace Command
     struct Mode
     {
         std::string channel;
+        std::string modes;
+        std::vector<std::string> args;
+
     };
 
     struct Topic
