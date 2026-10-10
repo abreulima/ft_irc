@@ -64,6 +64,7 @@ void Server::Run()
 		{
 			if (fds.at(i).revents & POLLIN)
 			{
+				// TODO: Manage buffering! Message could be incomplete.
 				char incoming[513];
 				int numBytes = recv(fds.at(i).fd, incoming, 512, 0);
 
