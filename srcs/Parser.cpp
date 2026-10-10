@@ -69,7 +69,7 @@ Type Parser::ProcessLine(std::string message)
 	else if (message.compare(0, 4, "MODE") == 0)
 	{
 
-		int numArgs = 0;
+		size_t numArgs = 0;
 		std::vector<std::string> messages = Split(message, " ");
 		// mode
 		if (messages.size() == 2)
