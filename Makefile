@@ -1,6 +1,6 @@
 NAME        := ircserv
 CXX         := c++
-CXXFLAGS    := -Wall -Wextra -Werror -std=c++98 -MMD -MP
+CXXFLAGS    := -Wall -Wextra -Werror -std=c++98 -MMD -MP -g3
 INC         := -Iincs
 
 SRCS        := $(addprefix srcs/, $(addsuffix .cpp, Main Server Client Parser Channel Handlers))

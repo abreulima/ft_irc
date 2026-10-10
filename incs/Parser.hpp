@@ -46,14 +46,18 @@ namespace Command
         std::string channel;
         std::string modes;
         std::vector<std::string> args;
-
     };
 
     struct Topic
     {
         std::string topic;
         std::string channel;
-        bool        shouldChange;
+        bool shouldChange;
+    };
+
+    struct Quit
+    {
+        std::string reason;
     };
 
 }
@@ -85,6 +89,7 @@ public:
     Command::Kick kick;
     Command::Topic topic;
     Command::Join join;
+    Command::Quit quit;
     Command::Priv priv;
     Command::Who who;
     Command::Mode mode;

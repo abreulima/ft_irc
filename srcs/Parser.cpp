@@ -5,13 +5,14 @@ Type Parser::ProcessLine(std::string message)
 {
 	std::cout << "Client Says: " << message << std::endl;
 
+	std::vector<std::string> messages = Split(message, " ");
+
 	if (message.compare(0, 3, "CAP") == 0)
 	{
 		return (CAP);
 	}
 	else if (message.compare(0, 4, "NICK") == 0)
 	{
-		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() > 1)
 		{
 			nick.nickname = messages.at(1);
@@ -20,7 +21,6 @@ Type Parser::ProcessLine(std::string message)
 	}
 	else if (message.compare(0, 4, "USER") == 0)
 	{
-		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() > 1)
 		{
 			user.username = messages.at(1);
@@ -29,7 +29,6 @@ Type Parser::ProcessLine(std::string message)
 	}
 	else if (message.compare(0, 7, "PRIVMSG") == 0)
 	{
-		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() > 1)
 		{
 			priv.target = messages.at(1);
@@ -39,7 +38,6 @@ Type Parser::ProcessLine(std::string message)
 	}
 	else if (message.compare(0, 4, "KICK") == 0)
 	{
-		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() >= 3)
 		{
 			kick.channel = messages.at(1);
@@ -50,7 +48,6 @@ Type Parser::ProcessLine(std::string message)
 	}
 	else if (message.compare(0, 4, "JOIN") == 0)
 	{
-		std::vector<std::string> messages = Split(message, " ");
 		if (message.size() > 1)
 		{
 			join.channel = messages.at(1);
@@ -59,7 +56,6 @@ Type Parser::ProcessLine(std::string message)
 	}
 	else if (message.compare(0, 3, "WHO") == 0)
 	{
-		std::vector<std::string> messages = Split(message, " ");
 		if (messages.size() > 1)
 		{
 			who.channel = messages.at(1);
@@ -70,7 +66,6 @@ Type Parser::ProcessLine(std::string message)
 	{
 
 		size_t numArgs = 0;
-		std::vector<std::string> messages = Split(message, " ");
 		// mode
 		if (messages.size() == 2)
 		{
@@ -86,14 +81,14 @@ Type Parser::ProcessLine(std::string message)
 			for (size_t i = 0; i < messages.at(2).size(); i++)
 			{
 				if (messages.at(2)[i] == 'k' ||
-					messages.at(2)[i] == 'l' || 
+					messages.at(2)[i] == 'l' ||
 					messages.at(2)[i] == 'o')
 				{
 					numArgs++;
 				}
 			}
 		}
-	
+
 		if (numArgs > messages.size() - 3)
 			return ERROR;
 
@@ -107,12 +102,12 @@ Type Parser::ProcessLine(std::string message)
 	}
 	else if (message.compare(0, 4, "QUIT") == 0)
 	{
+		quit.reason = message.substr(message.find(':', 0) + 1);
 		return QUIT;
 	}
 	else if (message.compare(0, 5, "TOPIC") == 0)
 	{
 		std::cout << message << std::endl;
-		std::vector<std::string> messages = Split(message, " ");
 		if (messages.size() == 2)
 		{
 			topic.channel = messages.at(1);

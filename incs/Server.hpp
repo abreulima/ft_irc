@@ -30,7 +30,7 @@ class Server
         void HandlePrivMsg(Client *c, Command::Priv data);
         void HandleWho(Client *c, Command::Who data);
         void HandleMode(Client *c, Command::Mode data);
-        void HandleQuit(Client *c);
+        void HandleQuit(Client *c, Command::Quit data);
 
         //void HandlePRIVMSG();
         //void HandleUSER();

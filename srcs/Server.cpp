@@ -85,41 +85,18 @@ void Server::Run()
 
 						switch (cmd)
 						{
-						case CAP:
-							HandleCAP(&c, message);
-							break;
-						case NICK:
-							HandleNick(&c, parser.nick);
-							break;
-						case USER:
-							c.SetUsername(parser.user.username);
-							break;
-						case PRIVMSG:
-							HandlePrivMsg(&c, parser.priv);
-							break;
-						case JOIN:
-							HandleJoin(&c, parser.join);
-							break;
-						case KICK:
-							HandleKick(&c, parser.kick);
-							break;
-						case TOPIC:
-							HandleTopic(&c, parser.topic);
-							break;
-						case ERROR:
-							break;
-						case WHO:
-							HandleWho(&c, parser.who);
-							break;
-						case MODE:
-							HandleMode(&c, parser.mode);
-							break;
-						case QUIT:
-							HandleQuit(&c);
-							break;
-						default:
-							std::cout << "UNKNOWN\n";
-							break;
+						case CAP:		HandleCAP(&c, message);					break;
+						case NICK:		HandleNick(&c, parser.nick);			break;
+						case USER:		c.SetUsername(parser.user.username);	break;
+						case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
+						case JOIN:		HandleJoin(&c, parser.join);			break;
+						case KICK:		HandleKick(&c, parser.kick);			break;
+						case TOPIC:		HandleTopic(&c, parser.topic);			break;
+						case ERROR:												break;
+						case WHO:		HandleWho(&c, parser.who);				break;
+						case MODE:		HandleMode(&c, parser.mode);			break;
+						case QUIT:		HandleQuit(&c, parser.quit);							break;
+						default:		std::cout << "UNKNOWN\n";				break;
 						}
 					}
 				}
@@ -216,7 +193,6 @@ void Server::HandleTopic(Client *c, Command::Topic data)
 
 void Server::HandleKick(Client *c, Command::Kick data)
 {
-
 	Channel &channel = channels[data.channel];
 
 	Role role = channel.clients.at(c);
@@ -325,13 +301,14 @@ void Server::HandleMode(Client *c, Command::Mode data)
 	SendToClient(*c, res);
 }
 
-void Server::HandleQuit(Client *c)
+void Server::HandleQuit(Client *c, Command::Quit data)
 {
 	std::map<std::string, Channel>::iterator it;
 	it = channels.begin();
 
 	while (it != channels.end())
 	{
+		(void)data;
 		if (it->second.IsMember(c))
 			it->second.Remove(c);
 		it++;
