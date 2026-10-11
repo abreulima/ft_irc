@@ -9,6 +9,19 @@
 #include <fcntl.h>
 #include <cstdlib>
 
+
+Server::Server(int port, std::string password) : port(port), password(password) 
+{
+
+}
+
+void Server::Display()
+{
+	std::cout << "Server running at port " << port << "\n";
+	std::cout << "Preferred client is HexChat." << "\n";
+	return;
+}
+
 bool Server::Init()
 {
 	serverFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -19,7 +32,7 @@ bool Server::Init()
 
 	sockaddr_in serverAddress;
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	serverAddress.sin_port = htons(6667);
+	serverAddress.sin_port = htons(port);
 	serverAddress.sin_family = AF_INET;
 
 	// fcntl(serverFD, F_SETFL, O_NONBLOCK);
@@ -36,6 +49,7 @@ bool Server::Init()
 
 	fds.push_back((pollfd){serverFD, POLLIN, 0});
 
+	Display();
 	isRunning = true;
 
 	return true;
@@ -100,20 +114,28 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 
 		switch (cmd)
 		{
-		case CAP:		HandleCAP(&c, message);					break;
-		case NICK:		HandleNick(&c, parser.nick);			break;
-		case USER:		c.SetUsername(parser.user.username);	break;
-		case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
-		case JOIN:		HandleJoin(&c, parser.join);			break;
-		case KICK:		HandleKick(&c, parser.kick);			break;
-		case TOPIC:		HandleTopic(&c, parser.topic);			break;
-		case ERROR:												break;
-		case WHO:		HandleWho(&c, parser.who);				break;
-		case MODE:		HandleMode(&c, parser.mode);			break;
-		case QUIT:		HandleQuit(&c, parser.quit);			break;
-		default:		std::cout << "UNKNOWN\n";				break;
+			case CAP:		HandleCAP(&c, message);					break;
+			case NICK:		HandleNick(&c, parser.nick);			break;
+			case USER:		c.SetUsername(parser.user.username);	break;
+			case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
+			case JOIN:		HandleJoin(&c, parser.join);			break;
+			case KICK:		HandleKick(&c, parser.kick);			break;
+			case TOPIC:		HandleTopic(&c, parser.topic);			break;
+			case ERROR:												break;
+			case WHO:		HandleWho(&c, parser.who);				break;
+			case MODE:		HandleMode(&c, parser.mode);			break;
+			case QUIT:		HandleQuit(&c, parser.quit);			break;
+			default:		std::cout << "UNKNOWN\n";				break;
 		}
+
+		if (cmd == ERROR)
+			std::cerr << "\033[31m" << "User says: " << message << "\033[0m\n";
+		else
+			std::cerr << "\033[33m" << "User says: " << message << "\033[0m\n";
 	}
+
+	
+
 }
 
 void Server::HandleCAP(Client *c, std::string line)
@@ -133,9 +155,10 @@ void Server::HandleCAP(Client *c, std::string line)
 
 void Server::HandleJoin(Client *c, Command::Join data)
 {
+	if (data.channel.empty() || data.channel.at(0) != '#')
+		return;
+	
 	std::string res = c->GetPrefix() + " JOIN " + data.channel;
-
-	// Channel *channel;
 
 	Role role;
 	if (channels[data.channel].CountMembers() > 0)
@@ -237,8 +260,40 @@ void Server::HandleKick(Client *c, Command::Kick data)
 
 void Server::HandleNick(Client *c, Command::Nick data)
 {
+	// Check if nickname isn't being used
+	
+	/*
+	std::map<int, Client>::iterator it;
+	it = clients.begin();
+
+	while (it != clients.end())
+	{
+
+		if (&it->second == c)
+		{
+			it++;
+			continue;
+		}
+
+		if (it->second.GetNickname() == data.nickname)
+		{
+			std::string userNickname = c->GetNickname().empty() ? "*" : c->GetNickname();
+			std::string res;
+			res += ":42.pt " + ERR_NICKNAMEINUSE + " " + userNickname + " ";
+			res += data.nickname + " :Nickname already in use.";
+			SendToClient(*c, res);
+			return ;
+		}
+		it++;
+	}
+	*/
+
 	std::string res = c->GetPrefix() + " NICK " + data.nickname;
-	SendToClient(*c, res);
+	std::vector<Channel *> channelsByMember = GetChannelsByClient(c);
+	for(size_t i = 0; i < channelsByMember.size(); i++)
+	{
+		SendToChannel(*channelsByMember.at(i), res, NULL);
+	}
 	c->SetNickname(data.nickname);
 }
 
@@ -307,16 +362,15 @@ void Server::HandleMode(Client *c, Command::Mode data)
 {
 	// :irc.server 324 <nick> #Hello +nt
 	// 324 RPL_CHANNELMODEIS
+	std::cout << data.channel << std::endl;
 	Channel *channel = GetChannelByName(data.channel);
 	
-	std::cout << "User here" << std::endl;
-
 	if (!channel)
 		return ;
-
+	
 	if (!data.isOperation)
 	{
-		std::string res = ":42.pt 324 " + c->GetNickname() + " " + data.channel + " " + channel->GetModesString();
+		std::string res = ":42.pt " + RPL_CHANNELMODEIS + c->GetNickname() + " " + data.channel + " " + channel->GetModesString();
 		SendToClient(*c, res);
 		return ;
 	}
@@ -326,10 +380,55 @@ void Server::HandleMode(Client *c, Command::Mode data)
 
 	for (size_t i = 0 ; i < data.modes.size(); i++)
 	{
-		
+		if (data.modes.at(i) == 'o')
+		{
+			Client *c = channel->GetUserByNickname(data.args.at('o'));
+			if (!c)
+				return ;
+			
+			data.isAdding 
+			? channel->AddOperator(c) 
+			: channel->RemoveOperator(c);
+		}
+		else if (data.modes.at(i) == 't')
+		{
+			data.isAdding 
+			? channel->modes.isTopicOpOnly = true 
+			: channel->modes.isTopicOpOnly = false;
+		}
+		else if(data.modes.at(i) == 'i')
+		{
+			data.isAdding 
+			? channel->modes.isInviteOnly = true 
+			: channel->modes.isInviteOnly = false;
+		}
+		else if (data.modes.at(i) == 'l')
+		{
+			data.isAdding
+			? channel->SetLimit(data.args.at('l'))
+			: channel->SetLimit(0);
+		}
+		else if (data.modes.at(i) == 'k')
+		{
+			data.isAdding 
+			? channel->AddPassword(data.args.at('k'))
+			: channel->RemovePassword();
+		}
 	}
 
-	
+	// Send it back to everyone
+	std::string res = ":42.pt MODE " + data.channel + " ";
+	res += data.modes;
+	std::map<char, std::string>::iterator it;
+	it = data.args.begin();
+	while (it != data.args.end())
+	{
+		res += " ";
+		res += it->second;
+		it++;
+	}
+	std::cout << res << std::endl;
+	SendToChannel(*channel, res, NULL);
 }
 
 void Server::HandleQuit(Client *c, Command::Quit data)
@@ -339,7 +438,7 @@ void Server::HandleQuit(Client *c, Command::Quit data)
 	std::string res = c->GetPrefix() + " QUIT :Bye";
 	// Send message to everyone the member is leaving
 	std::vector<Channel *> channelsByMember = GetChannelsByClient(c);
-	for(size_t i = 0; i < channels.size(); i++)
+	for(size_t i = 0; i < channelsByMember.size(); i++)
 	{
 		channelsByMember.at(i)->Remove(c);
 		SendToChannel(*channelsByMember.at(i), res, c);
@@ -358,7 +457,7 @@ void Server::HandleQuit(Client *c, Command::Quit data)
 
 void Server::SendToClient(Client c, std::string message)
 {
-	std::cout << "Server says: " + message << "\n";
+	std::cerr << "\033[32m" << "Server says: " << message << "\033[0m\n";
 	message += "\r\n";
 	send(c.GetFD(), message.c_str(), message.size(), 0);
 }

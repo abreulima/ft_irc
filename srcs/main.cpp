@@ -3,7 +3,7 @@
 
 int main(/* int argc, char const *argv[] */)
 {
-    Server server;
+    Server server(6667, "");
     
     if (server.Init() == true)
         server.Run();

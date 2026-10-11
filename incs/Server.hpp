@@ -10,6 +10,8 @@
 #include <poll.h>
 
 #define RPL_TOPIC std::string("332")
+#define RPL_CHANNELMODEIS std::string("324")
+#define ERR_NICKNAMEINUSE std::string("433")
 
 class Server
 {
@@ -18,6 +20,8 @@ private:
 	std::map<std::string, Channel>	channels;
 	std::map<int, Client>			clients;
 	int 							serverFD;
+	int								port;
+	std::string						password;
 	bool 							isRunning;
 
 	// Handlers
@@ -45,8 +49,10 @@ private:
 	Channel* GetChannelByName(const std::string& name);
 
 public:
+	Server(int port, std::string password);
 	void Run();
 	bool Init();
+	void Display();
 };
 
 #endif

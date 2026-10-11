@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 namespace Command
 {
@@ -47,7 +48,8 @@ namespace Command
         bool isAdding;
         std::string channel;
         std::string modes;
-        std::vector<std::string> args;
+        //std::vector<std::string> args;
+        std::map<char, std::string> args;
     };
 
     struct Topic

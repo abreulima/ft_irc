@@ -1,5 +1,7 @@
 #include "Channel.hpp"
 
+#include <cstdlib>
+
 // OCF
 Channel::Channel()
 {
@@ -117,4 +119,41 @@ bool Channel::IsOperator(Client *c)
         return false;
 
     return clients[c].isOperator;    
+}
+
+void Channel::AddOperator(Client *c)
+{
+    if (!IsMember(c))
+        return;
+    clients[c].isOperator = true;
+}
+void Channel::RemoveOperator(Client *c)
+{
+    if (!IsMember(c))
+        return;
+    clients[c].isOperator = false;
+}
+
+void Channel::AddPassword(std::string password)
+{
+    modes.password = password;
+}
+void Channel::RemovePassword()
+{
+    modes.password = "";
+}
+
+void Channel::SetLimit(int limit)
+{
+    if (limit >= 0)
+        modes.limit = limit;
+}
+
+void Channel::SetLimit(const std::string& limit)
+{
+
+    if (limit.empty())
+        return ;
+
+    SetLimit(std::atoi(limit.c_str()));
 }

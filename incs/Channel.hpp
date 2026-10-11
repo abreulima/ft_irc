@@ -49,6 +49,17 @@ public:
 	size_t CountMembers();
 	bool IsMember(Client *c);
 	bool IsOperator(Client *c);
+
+	void AddOperator(Client *c);
+	void RemoveOperator(Client *c);
+
+	void AddPassword(std::string c);
+	void RemovePassword();
+
+	void SetLimit(int limit);
+	void SetLimit(const std::string& limit);
+
+
 };
 
 #endif

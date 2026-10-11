@@ -3,7 +3,7 @@
 
 Type Parser::ProcessLine(std::string message)
 {
-	std::cout << "Client Says: " << "" << message << "" << std::endl;
+	//std::cout << "Client Says: " << "" << message << "" << std::endl;
 
 	std::vector<std::string> messages = Split(message, " ");
 
@@ -65,20 +65,21 @@ Type Parser::ProcessLine(std::string message)
 	else if (message.compare(0, 4, "MODE") == 0)
 	{
 
-		// MODE #CHANAL
 		if (messages.size() < 2)
 			return ERROR;
 
+		mode.channel = messages.at(1);
+
 		if (messages.size() == 2)
 			return MODE;
-		
+			
 		// 0    1      2
 		// MODE #CANAL _
 		// O Hexclient manda uma string vazia se o usuario digitar "/MODE"
+
 		if (messages.at(2).empty())
 		{
 			mode.isOperation = false;
-			mode.channel = messages.at(1);
 			return MODE;
 		}
 		else if (messages.at(2)[0] == '+')
@@ -96,53 +97,42 @@ Type Parser::ProcessLine(std::string message)
 			return ERROR;
 		}
 
-			size_t numArgs = 0;
-		// just /mode 
+		mode.modes = messages.at(2);
 
-
-		std::cout << "here " << messages[1] <<  "@" << std::endl; 
-		if (messages.size() == 2)
+		// checa o numero de argumentos
+		// (-+)o (operador), +k (password), +l (limit) precisam de argumentos
+		size_t numArgs = 0;
+		for (size_t i = 0; i < messages.at(2).size(); i++)
 		{
-			mode.isOperation = false;
-			mode.channel = messages.at(1);
-			return MODE;
+			if (messages.at(2)[i] == 'l' && mode.isAdding)
+				numArgs++;
+			else if (messages.at(2)[i] == 'k' && mode.isAdding)
+				numArgs++;
+			else if (messages.at(2)[i] == 'o')
+				numArgs++;
 		}
-
-		// 0     1     2   3
-		// mode #canal +o ivan
-		if (messages.size() > 2)
-		{
-			mode.isOperation = true;
-			mode.modes = messages.at(2);
-
-			if (messages.at(2)[0] == '+')
-				mode.isAdding = true;
-			else if (messages.at(2)[0] == '-')
-				mode.isAdding = false;
-			else
-				return ERROR;
-
-
-			for (size_t i = 0; i < messages.at(2).size(); i++)
-			{
-				if (messages.at(2)[i] == 'k' ||
-					messages.at(2)[i] == 'l' ||
-					messages.at(2)[i] == 'o')
-				{
-					numArgs++;
-				}
-			}
-		}
-
-		if (numArgs > messages.size() - 3)
+		if (numArgs != messages.size() - 3)
 			return ERROR;
 
-		/*
-		for (size_t i = 3; i < nu)
+		numArgs = 1;
+		for (size_t i = 0; i < messages.at(2).size(); i++)
 		{
-
+			if (messages.at(2)[i] == 'l' && mode.isAdding)
+			{
+				mode.args['l'] = message.at(2 + numArgs);
+				numArgs++;
+			}
+			else if (messages.at(2)[i] == 'k' && mode.isAdding)
+			{
+				mode.args['k'] = messages.at(2 + numArgs);
+				numArgs++;
+			}
+			else if (messages.at(2)[i] == 'o')
+			{
+				mode.args['o'] = messages.at(2 + numArgs);
+				numArgs++;
+			}
 		}
-		*/
 		return MODE;
 	}
 	else if (message.compare(0, 4, "QUIT") == 0)
