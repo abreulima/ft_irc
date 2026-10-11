@@ -7,6 +7,7 @@
 
 struct Modes
 {
+	bool isMemberOnly;
 	bool isInviteOnly;
 	bool isTopicOpOnly;
 	std::string password;
@@ -47,6 +48,7 @@ public:
 	void Remove(Client *c);
 	size_t CountMembers();
 	bool IsMember(Client *c);
+	bool IsOperator(Client *c);
 };
 
 #endif

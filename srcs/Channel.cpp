@@ -3,6 +3,7 @@
 // OCF
 Channel::Channel()
 {
+    modes.isMemberOnly = true;
     modes.isInviteOnly = false;
     modes.isTopicOpOnly = true;
     modes.password = "";
@@ -55,6 +56,7 @@ Client *Channel::GetUserByNickname(std::string nickname)
 std::string Channel::GetModesString()
 {
     std::string res = "+";
+    res += modes.isMemberOnly ? "n" : "";
     res += modes.isInviteOnly ? "i" : "";
     res += modes.isTopicOpOnly ? "t" : "";
     res += !modes.password.empty() ? "k" : "";
@@ -78,11 +80,17 @@ void Channel::setTopic(const std::string &ref)
 
 void Channel::Add(Client *c, Role r)
 {
+    if (!c)
+        return ;
+
     clients[c] = r;
 }
 
 void Channel::Remove(Client *c)
 {
+    if (!c)
+        return ;
+
     clients.erase(c);
 }
 
@@ -93,7 +101,20 @@ size_t Channel::CountMembers()
 
 bool Channel::IsMember(Client *c)
 {
+    if (!c)
+        return false;
+    
     if (clients.find(c) != clients.end())
         return true;
     return false;
+}
+bool Channel::IsOperator(Client *c)
+{
+    if (!c)
+        return false;
+
+    if (!IsMember(c))
+        return false;
+
+    return clients[c].isOperator;    
 }

@@ -110,7 +110,7 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 		case ERROR:												break;
 		case WHO:		HandleWho(&c, parser.who);				break;
 		case MODE:		HandleMode(&c, parser.mode);			break;
-		case QUIT:		HandleQuit(&c, parser.quit);							break;
+		case QUIT:		HandleQuit(&c, parser.quit);			break;
 		default:		std::cout << "UNKNOWN\n";				break;
 		}
 	}
@@ -307,21 +307,52 @@ void Server::HandleMode(Client *c, Command::Mode data)
 {
 	// :irc.server 324 <nick> #Hello +nt
 	// 324 RPL_CHANNELMODEIS
-	std::string res = ":42.pt 324 " + c->GetNickname() + " " + data.channel + " +nt";
-	SendToClient(*c, res);
+	Channel *channel = GetChannelByName(data.channel);
+	
+	std::cout << "User here" << std::endl;
+
+	if (!channel)
+		return ;
+
+	if (!data.isOperation)
+	{
+		std::string res = ":42.pt 324 " + c->GetNickname() + " " + data.channel + " " + channel->GetModesString();
+		SendToClient(*c, res);
+		return ;
+	}
+
+	if (!channel->IsOperator(c))
+		return ;
+
+	for (size_t i = 0 ; i < data.modes.size(); i++)
+	{
+		
+	}
+
+	
 }
 
 void Server::HandleQuit(Client *c, Command::Quit data)
 {
+	(void)data;
+
+	std::string res = c->GetPrefix() + " QUIT :Bye";
+	// Send message to everyone the member is leaving
+	std::vector<Channel *> channelsByMember = GetChannelsByClient(c);
+	for(size_t i = 0; i < channels.size(); i++)
+	{
+		channelsByMember.at(i)->Remove(c);
+		SendToChannel(*channelsByMember.at(i), res, c);
+	}
+	// If the channel is empty it should be removed
 	std::map<std::string, Channel>::iterator it;
 	it = channels.begin();
-
 	while (it != channels.end())
 	{
-		(void)data;
-		if (it->second.IsMember(c))
-			it->second.Remove(c);
-		it++;
+		if (it->second.CountMembers() == 0)
+			channels.erase(it++);
+		else
+			++it;
 	}
 }
 
@@ -345,4 +376,33 @@ void Server::SendToChannel(Channel c, std::string message, Client *exclude)
 			SendToClient(*it->first, message);
 		it++;
 	}
+}
+
+// Return all the channels' pointer the client is a member.
+std::vector<Channel*> Server::GetChannelsByClient(Client *c)
+{
+	std::vector<Channel*> res;
+
+	std::map<std::string, Channel>::iterator it;
+	it = channels.begin();
+
+	while (it != channels.end())
+	{
+		Channel channel = it->second;
+		if (channel.IsMember(c))
+			res.push_back(&it->second);
+		it++;
+	}
+	return res;
+}
+
+Channel* Server::GetChannelByName(const std::string& name)
+{
+	std::map<std::string, Channel>::iterator it;
+	it = channels.find(name);
+
+	if (it != channels.end())
+		return &it->second;
+	else
+		return NULL;
 }

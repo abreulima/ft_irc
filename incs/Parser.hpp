@@ -43,6 +43,8 @@ namespace Command
 
     struct Mode
     {
+        bool isOperation;
+        bool isAdding;
         std::string channel;
         std::string modes;
         std::vector<std::string> args;

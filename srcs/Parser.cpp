@@ -3,7 +3,7 @@
 
 Type Parser::ProcessLine(std::string message)
 {
-	std::cout << "Client Says: " << message << std::endl;
+	std::cout << "Client Says: " << "" << message << "" << std::endl;
 
 	std::vector<std::string> messages = Split(message, " ");
 
@@ -65,10 +65,45 @@ Type Parser::ProcessLine(std::string message)
 	else if (message.compare(0, 4, "MODE") == 0)
 	{
 
-		size_t numArgs = 0;
-		// mode
+		// MODE #CHANAL
+		if (messages.size() < 2)
+			return ERROR;
+
+		if (messages.size() == 2)
+			return MODE;
+		
+		// 0    1      2
+		// MODE #CANAL _
+		// O Hexclient manda uma string vazia se o usuario digitar "/MODE"
+		if (messages.at(2).empty())
+		{
+			mode.isOperation = false;
+			mode.channel = messages.at(1);
+			return MODE;
+		}
+		else if (messages.at(2)[0] == '+')
+		{
+			mode.isOperation = true;
+			mode.isAdding = true;
+		}
+		else if (messages.at(2)[0] == '-')
+		{
+			mode.isOperation = true;
+			mode.isAdding = false;
+		}
+		else
+		{
+			return ERROR;
+		}
+
+			size_t numArgs = 0;
+		// just /mode 
+
+
+		std::cout << "here " << messages[1] <<  "@" << std::endl; 
 		if (messages.size() == 2)
 		{
+			mode.isOperation = false;
 			mode.channel = messages.at(1);
 			return MODE;
 		}
@@ -77,7 +112,17 @@ Type Parser::ProcessLine(std::string message)
 		// mode #canal +o ivan
 		if (messages.size() > 2)
 		{
+			mode.isOperation = true;
 			mode.modes = messages.at(2);
+
+			if (messages.at(2)[0] == '+')
+				mode.isAdding = true;
+			else if (messages.at(2)[0] == '-')
+				mode.isAdding = false;
+			else
+				return ERROR;
+
+
 			for (size_t i = 0; i < messages.at(2).size(); i++)
 			{
 				if (messages.at(2)[i] == 'k' ||

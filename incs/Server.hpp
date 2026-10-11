@@ -40,6 +40,10 @@ private:
 	void SendToClient(Client c, std::string message);
 	void SendToChannel(Channel c, std::string message, Client *exclude);
 
+	// Channel Manager
+	std::vector<Channel*> GetChannelsByClient(Client *c);
+	Channel* GetChannelByName(const std::string& name);
+
 public:
 	void Run();
 	bool Init();
