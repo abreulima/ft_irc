@@ -45,6 +45,7 @@ private:
 	// Send
 	void SendToClient(Client c, std::string message);
 	void SendToChannel(Channel c, std::string message, Client *exclude);
+	void SendToChannels(std::vector<Channel *> channels, std::string message, Client *exclude);
 
 	// Channel Manager
 	std::vector<Channel*> GetChannelsByClient(Client *c);

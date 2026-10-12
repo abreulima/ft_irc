@@ -176,6 +176,7 @@ void Server::HandleJoin(Client *c, Command::Join data)
 
 	// this is ugly
 
+	// accessing a map with operator[] creates the entry if it doesn't exist.
 	Channel &channel = channels[data.channel];
 	std::string nickList;
 
@@ -289,11 +290,7 @@ void Server::HandleNick(Client *c, Command::Nick data)
 	*/
 
 	std::string res = c->GetPrefix() + " NICK " + data.nickname;
-	std::vector<Channel *> channelsByMember = GetChannelsByClient(c);
-	for(size_t i = 0; i < channelsByMember.size(); i++)
-	{
-		SendToChannel(*channelsByMember.at(i), res, NULL);
-	}
+	SendToChannels(GetChannelsByClient(c), res, NULL);
 	c->SetNickname(data.nickname);
 }
 
@@ -449,6 +446,7 @@ void Server::HandleQuit(Client *c, Command::Quit data)
 
 	std::string res = c->GetPrefix() + " QUIT :Bye";
 	// Send message to everyone the member is leaving
+	// SendToChannels(GetChannelsByClient(c), res, c); // Can't implement this one alone because of remove function is not implemented in the send function.
 	std::vector<Channel *> channelsByMember = GetChannelsByClient(c);
 	for(size_t i = 0; i < channelsByMember.size(); i++)
 	{
@@ -482,6 +480,13 @@ void Server::SendToChannel(Channel c, std::string message, Client *exclude)
 		if (it->first == exclude)
 			continue;
 		SendToClient(*it->first, message);
+	}
+}
+
+void Server::SendToChannels(std::vector<Channel *> channels, std::string message, Client *exclude) {
+	for(size_t i = 0; i < channels.size(); i++)
+	{
+		SendToChannel(*channels.at(i), message, exclude);
 	}
 }
 
