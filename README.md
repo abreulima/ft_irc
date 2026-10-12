@@ -24,6 +24,8 @@ O parsing não é individual e o subject avisa que isso será testado, em nosso 
 
 Também há bastante acesso a memórias através de *maps* e *vectors*, eu estive a colocar algumas proteções.
 
+O HexChat adiciona um delay (e parece que o servidor está lendo) caso o cliente esteja a enviar várias mensagens ao mesmo tempo, é possível remover com o comando ``/set net_throttle 0``.
+
 ## Mini Doc.
 
 Retorna um vector com todos os canais que o *Client c* está conectado. Utilizado nos comandos /KICK e /NICK para informar todos os demais clientes que estão conectados ao mesmo canal sobre alguma mudança.
