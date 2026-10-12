@@ -44,7 +44,7 @@ Para aceder ao canal é necessário informar a senha "pizza"  por causa de **k**
 
 ``/MODE -otlk Ivan``
 
-O usuário *Ivan* passa ser um operador do canal, por causa do **o**.
+O usuário *Ivan* deixa de ser um operador do canal, por causa do **o**.
 Qualquer cliente do canal pode mudar o tópico.
 O canal deixa de ter limite de usuários.
 O canal não tem mais senha.
