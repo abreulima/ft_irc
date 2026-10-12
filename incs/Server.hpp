@@ -9,9 +9,11 @@
 #include <vector>
 #include <poll.h>
 
-#define RPL_TOPIC std::string("332")
-#define RPL_CHANNELMODEIS std::string("324")
-#define ERR_NICKNAMEINUSE std::string("433")
+#define RPL_TOPIC 			std::string("332")
+#define RPL_CHANNELMODEIS 	std::string("324")
+#define ERR_NICKNAMEINUSE 	std::string("433")
+#define ERR_NEEDMOREPARAMS 	std::string("461")
+#define ERR_NOSUCHCHANNEL 	std::string("403")
 
 class Server
 {

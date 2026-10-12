@@ -114,23 +114,22 @@ Type Parser::ProcessLine(std::string message)
 		if (numArgs != messages.size() - 3)
 			return ERROR;
 
-		numArgs = 1;
+		int argIndex = 3;
 		for (size_t i = 0; i < messages.at(2).size(); i++)
 		{
-			if (messages.at(2)[i] == 'l' && mode.isAdding)
+			char m = mode.modes[i];
+
+			if (m == 'l' && mode.isAdding)
 			{
-				mode.args['l'] = message.at(2 + numArgs);
-				numArgs++;
+				mode.args['l'] = messages.at(argIndex++);
 			}
-			else if (messages.at(2)[i] == 'k' && mode.isAdding)
+			else if (m == 'k' && mode.isAdding)
 			{
-				mode.args['k'] = messages.at(2 + numArgs);
-				numArgs++;
+				mode.args['k'] = messages.at(argIndex++);
 			}
-			else if (messages.at(2)[i] == 'o')
+			else if (m == 'o')
 			{
-				mode.args['o'] = messages.at(2 + numArgs);
-				numArgs++;
+				mode.args['o'] = messages.at(argIndex++);
 			}
 		}
 		return MODE;

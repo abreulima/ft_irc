@@ -205,8 +205,8 @@ void Server::HandleTopic(Client *c, Command::Topic data)
 	if (channels.find(data.channel) == channels.end())
 	{
 		std::string res;
-		res = ":42.pt 403 " + c->GetNickname() + " " + data.channel + " :No such channel";
-		SendToChannel(channels[data.channel], res, NULL);
+		res = ":42.pt " + ERR_NOSUCHCHANNEL + " " + c->GetNickname() + " " + data.channel + " :No such channel";
+		SendToClient(*c, res);
 		return;
 	}
 
@@ -299,33 +299,45 @@ void Server::HandleNick(Client *c, Command::Nick data)
 
 void Server::HandlePrivMsg(Client *c, Command::Priv data)
 {
+	std::cout << "PRIVMSG from " << c->GetNickname() << " fd=" << c->GetFD() << std::endl;
 	std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
 
-	if (data.target.size() > 0)
-
+	if (data.target.empty())
 	{
-		if (data.target.at(0) == '#')
+		// TODO INVALID PARAM
+		return ;
+	}
+
+	if (data.target.at(0) == '#')
+	{
+		std::map<std::string, Channel>::iterator it;
+		it = channels.find(data.target);
+
+		if (it == channels.end())
 		{
-			SendToChannel(channels[data.target], res, c);
+			// TODO ERR_NOCHANNEL
+			return ;
 		}
-		else
+		SendToChannel(channels[data.target], res, c);
+	}
+	else
+	{
+		std::map<int, Client>::iterator it; 
+		it = clients.begin();
+
+		while (it != clients.end())
 		{
-			std::map<int, Client>::iterator it; // yes maam
-			it = clients.begin();				// acertei
-
-			std::cout << "dm " << c->GetNickname() << " quer tc com (" << data.target << ")" << std::endl;
-
-			while (it != clients.end())
+			if (it->second.GetNickname().compare(data.target) == 0)
 			{
-				// it->first (int), it->second (cliente)
-				if (it->second.GetNickname().compare(data.target) == 0)
-				{
-					SendToClient(it->second, res); // tenho que enviar para o cliente res, nao apenas o conteudo da msg
-				}
-				it++;
+				SendToClient(it->second, res);
+				return ;
 			}
+			it++;
 		}
 	}
+	
+	// TODO ERR_NOCLIENT
+	
 }
 
 // per user
@@ -378,7 +390,7 @@ void Server::HandleMode(Client *c, Command::Mode data)
 	if (!channel->IsOperator(c))
 		return ;
 
-	for (size_t i = 0 ; i < data.modes.size(); i++)
+	for (size_t i = 1 ; i < data.modes.size(); i++)
 	{
 		if (data.modes.at(i) == 'o')
 		{
@@ -464,16 +476,12 @@ void Server::SendToClient(Client c, std::string message)
 
 void Server::SendToChannel(Channel c, std::string message, Client *exclude)
 {
-	std::map<Client *, Role>::iterator it;
-	it = c.clients.begin();
-
-	while (it != c.clients.end())
+	std::map<Client *, Role>::iterator it;	
+	for (it = c.clients.begin(); it != c.clients.end(); it++)
 	{
-		if (exclude == NULL)
-			SendToClient(*it->first, message);
-		else if (it->first->GetFD() != exclude->GetFD())
-			SendToClient(*it->first, message);
-		it++;
+		if (it->first == exclude)
+			continue;
+		SendToClient(*it->first, message);
 	}
 }
 
