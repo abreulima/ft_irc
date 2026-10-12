@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <poll.h>
+#include <stdint.h>
 
 #define RPL_TOPIC 			std::string("332")
 #define RPL_CHANNELMODEIS 	std::string("324")
@@ -22,7 +23,7 @@ private:
 	std::map<std::string, Channel>	channels;
 	std::map<int, Client>			clients;
 	int 							serverFD;
-	int								port;
+	uint16_t						port;
 	std::string						password;
 	bool 							isRunning;
 
@@ -56,7 +57,7 @@ private:
 	Client *GetUserByNickname(std::string nickname);
 
 public:
-	Server(int port, std::string password);
+	Server(std::string port, std::string password);
 	void Run();
 	bool Init();
 	void Display();

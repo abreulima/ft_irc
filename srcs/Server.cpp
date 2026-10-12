@@ -8,10 +8,25 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <cstdlib>
+#include <errno.h>
 
-Server::Server(int port, std::string password) : port(port), password(password)
+static uint16_t parsePort(const std::string& s)
 {
+	long port;
+	if (s.empty()) // TODO: check invalid chars
+		throw std::invalid_argument("port should be an unsigned numeric");
+	
+	char* endptr;
+	port = strtol(s.c_str(), &endptr, 10);
+	// TODO: check strtol errno
+
+	if (port < 1 || port > 65535)
+		throw std::out_of_range("port should be bigger than 0 and lower or equal to 65535");
+	
+	return static_cast<uint16_t>(port);
 }
+
+Server::Server(std::string port, std::string password): port(parsePort(port)), password(password) {}
 
 void Server::Display()
 {

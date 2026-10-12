@@ -85,6 +85,7 @@ enum Type
     TOPIC,
     MODE,
     WHO,
+    PASS,
     QUIT
 };
 

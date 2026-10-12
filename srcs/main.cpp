@@ -1,11 +1,31 @@
 
+#include <iostream>
+#include <string>
 #include "Server.hpp"
 
-int main(/* int argc, char const *argv[] */)
+int main(int argc, char **argv)
 {
-    Server server(6667, "");
-    
-    if (server.Init() == true)
-        server.Run();
-    return 1;
+	if (argc != 3)
+	{
+		std::cerr << "Usage: " << argv[0] << " <port> <password>" << std::endl;
+		return 1;
+	}
+	std::string port(argv[1]);
+	std::string password(argv[2]);
+
+	try
+	{
+		Server server(port, password);
+
+		if (server.Init() == true)
+			server.Run();
+		else
+			return 1;
+	}
+	catch (const std::exception &e)
+	{
+		std::cerr << "Error: " << e.what() << std::endl;
+		return 1;
+	}
+	return 0;
 }

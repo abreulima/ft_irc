@@ -170,6 +170,10 @@ Type Parser::ProcessLine(std::string message)
 		}
 		return TOPIC;
 	}
+	else if (message.compare(0, 4, "PASS") == 0)
+	{
+		return PASS;
+	}
 	return (ERROR);
 }
 
