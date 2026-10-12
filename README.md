@@ -27,9 +27,9 @@
 
 #### MODE
 - [ ] Invite only               i
-- [ ] Topic restricted          t
+- [x] Topic restricted          t
 - [ ] Set remove password       k
-- [ ] Give / take operator      o
+- [x] Give / take operator      o
 - [ ] Set/remove user limit     l
 
 #### PERFECTING
@@ -53,7 +53,7 @@
 - [ ] Disconnections
 - [ ] Malformatted messages
 
-\* A solução é um pouco trabalhosa porque o HexChat não encerra a conexão e tenta com _Second choice..._ ele usa o /NICK várias vezes até conseguir na mesma conexão.
+\* A solução [para multiplos nicks] é um pouco trabalhosa porque o HexChat não encerra a conexão e tenta com _Second choice..._ ele usa o /NICK várias vezes até conseguir na mesma conexão.
 
 ## Modes
 

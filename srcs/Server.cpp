@@ -158,9 +158,12 @@ void Server::HandleJoin(Client *c, Command::Join data)
 	if (data.channel.empty() || data.channel.at(0) != '#')
 		return;
 	
-	std::string res = c->GetPrefix() + " JOIN " + data.channel;
-
+	// is this ugly? !not invite only or !not usepersmission
+	if (channels[data.channel].modes.isInviteOnly && !c->usePermission(data.channel))
+		return ;
+	//  
 	Role role;
+	std::string res = c->GetPrefix() + " JOIN " + data.channel;
 	if (channels[data.channel].CountMembers() > 0)
 	{
 		role.isOperator = false;

@@ -2,6 +2,7 @@
 #define CLIENT_HPP
 
 #include <string>
+#include <set>
 
 class Client
 {
@@ -10,20 +11,23 @@ private:
     std::string _username;
     std::string _nickname;
     std::string _hostname;
+    std::set<std::string> _invites;
 
 public:
     Client() {};
     //Client(int fd) : _fd(fd) {};
     //void SetFd(int fd);
-    int GetFD(); 
-    std::string GetUserName();
-    std::string GetNickname();
-    std::string GetHostName();
+    int GetFD()const ; 
+    const std::string& GetUserName()const;
+    const std::string& GetNickname()const;
+    const std::string& GetHostName()const;
+    bool usePermission(const std::string& ref);
 
     void SetFD(int value);
-    void SetUsername(std::string value);
-    void SetNickname(std::string value);
-    void SetHostname(std::string value);
+    void SetUsername(const std::string& value);
+    void SetNickname(const std::string& value);
+    void SetHostname(const std::string& value);
+    void addInvite(const std::string& value);
 
     std::string GetPrefix();
 
