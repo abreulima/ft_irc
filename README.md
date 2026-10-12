@@ -1,6 +1,6 @@
 # Tasks
 
-- [x] KICK
+<!-- - [x] KICK
 - [x] PRIVMSG
 - [x] TOPIC
 - [x] MODE (leia a secção)
@@ -8,7 +8,50 @@
 - [ ] Join (Parcialmente, falta pedir senha, por limite, ou apenas entrar por convite).
 - [ ] Invite
 - [ ] Nao permitir que dois usuarios utilizam o mesmo Nickname *
-- [ ] Parsing do argc, argv
+- [ ] Parsing do argc, argv -->
+
+#### REGULAR USERS
+- [x] Join server
+- [ ] Join with password
+- [x] Set nickname
+- [x] Set username
+- [ ] Join channel
+- [x] Send and reveive private messages
+- [x] Send and receive messages (channel)
+
+
+#### OPERATORS (CHANNEL)
+- [x] Kick
+- [ ] Invite
+- [x] Topic
+
+#### MODE
+- [ ] Invite only               i
+- [ ] Topic restricted          t
+- [ ] Set remove password       k
+- [ ] Give / take operator      o
+- [ ] Set/remove user limit     l
+
+#### PERFECTING
+- [ ] Join / auth
+- [ ] What else in nickname?
+- [ ] Multiple, unique nicknames / usernames
+- [ ] Messages to channels you are not auth
+- [ ] Check permission for each command
+- [ ] Permission chain mess up / stress
+- [ ] Flooding channel while client is busy
+
+#### OPTIONAL
+- [ ] Timeout
+- [ ] Ping
+
+#### LOW LEVEL
+- [ ] Buffers
+- [ ] Low level optimization
+- [ ] Data management
+- [ ] Blockings
+- [ ] Disconnections
+- [ ] Malformatted messages
 
 \* A solução é um pouco trabalhosa porque o HexChat não encerra a conexão e tenta com _Second choice..._ ele usa o /NICK várias vezes até conseguir na mesma conexão.
 
