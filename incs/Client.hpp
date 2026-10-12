@@ -21,7 +21,7 @@ public:
     const std::string& GetUserName()const;
     const std::string& GetNickname()const;
     const std::string& GetHostName()const;
-    bool usePermission(const std::string& ref);
+    bool useInvite(const std::string& ref);
 
     void SetFD(int value);
     void SetUsername(const std::string& value);

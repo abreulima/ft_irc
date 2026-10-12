@@ -1,9 +1,13 @@
 #include "Parser.hpp"
 #include <iostream>
 
+/*
+	TODO: EVERYTHING IS WRONG in the following checks:
+	if (message.size() > 1)
+ */
 Type Parser::ProcessLine(std::string message)
 {
-	//std::cout << "Client Says: " << "" << message << "" << std::endl;
+	// std::cout << "Client Says: " << "" << message << "" << std::endl;
 
 	std::vector<std::string> messages = Split(message, " ");
 
@@ -54,6 +58,17 @@ Type Parser::ProcessLine(std::string message)
 		}
 		return JOIN;
 	}
+	else if (message.compare(0, 6, "INVITE") == 0)
+	{
+		if (messages.size() > 2)
+		{
+			std::cout << messages.at(1) << std::endl;
+			invite.nickname = messages.at(1);
+			std::cout << messages.at(2) << std::endl;
+			invite.channel = messages.at(2);
+			return INVITE;
+		}
+	}
 	else if (message.compare(0, 3, "WHO") == 0)
 	{
 		if (messages.size() > 1)
@@ -72,7 +87,7 @@ Type Parser::ProcessLine(std::string message)
 
 		if (messages.size() == 2)
 			return MODE;
-			
+
 		// 0    1      2
 		// MODE #CANAL _
 		// O Hexclient manda uma string vazia se o usuario digitar "/MODE"

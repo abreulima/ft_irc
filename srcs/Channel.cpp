@@ -50,6 +50,7 @@ Client *Channel::GetUserByNickname(std::string nickname)
 
         if (member->GetNickname() == nickname)
             return member;
+        it++;
     }
     return NULL;
 }
@@ -83,7 +84,7 @@ void Channel::setTopic(const std::string &ref)
 void Channel::Add(Client *c, Role r)
 {
     if (!c)
-        return ;
+        return;
 
     clients[c] = r;
 }
@@ -91,7 +92,7 @@ void Channel::Add(Client *c, Role r)
 void Channel::Remove(Client *c)
 {
     if (!c)
-        return ;
+        return;
 
     clients.erase(c);
 }
@@ -105,7 +106,7 @@ bool Channel::IsMember(Client *c)
 {
     if (!c)
         return false;
-    
+
     if (clients.find(c) != clients.end())
         return true;
     return false;
@@ -118,7 +119,7 @@ bool Channel::IsOperator(Client *c)
     if (!IsMember(c))
         return false;
 
-    return clients[c].isOperator;    
+    return clients[c].isOperator;
 }
 
 void Channel::AddOperator(Client *c)
@@ -149,11 +150,11 @@ void Channel::SetLimit(int limit)
         modes.limit = limit;
 }
 
-void Channel::SetLimit(const std::string& limit)
+void Channel::SetLimit(const std::string &limit)
 {
 
     if (limit.empty())
-        return ;
+        return;
 
     SetLimit(std::atoi(limit.c_str()));
 }

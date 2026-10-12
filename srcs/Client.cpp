@@ -6,7 +6,7 @@ int Client::GetFD() const { return _fd; };
 const std::string &Client::GetUserName() const { return _username; }
 const std::string &Client::GetNickname() const { return _nickname; }
 const std::string &Client::GetHostName() const { return _hostname; }
-bool Client::usePermission(const std::string &ref)
+bool Client::useInvite(const std::string &ref)
 {
 	if (_invites.find(ref) != _invites.end())
 	{

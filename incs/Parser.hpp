@@ -64,6 +64,12 @@ namespace Command
         std::string reason;
     };
 
+    struct Invite
+    {
+        std::string nickname;
+        std::string channel;
+    };
+
 }
 
 enum Type
@@ -73,6 +79,7 @@ enum Type
     NICK,
     USER,
     PRIVMSG,
+    INVITE,
     JOIN,
     KICK,
     TOPIC,
@@ -92,6 +99,7 @@ public:
     Command::Nick nick;
     Command::Kick kick;
     Command::Topic topic;
+    Command::Invite invite;
     Command::Join join;
     Command::Quit quit;
     Command::Priv priv;

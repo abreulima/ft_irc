@@ -30,6 +30,7 @@ private:
 	void handleCommands(size_t fd_id, std::vector<std::string>& messages);
 
 	void HandleCAP(Client *c, std::string line);
+	void HandleInvite(Client *c, Command::Invite data);
 	void HandleJoin(Client *c, Command::Join data);
 	void HandleKick(Client *c, Command::Kick data);
 	void HandleTopic(Client *c, Command::Topic data);
@@ -50,6 +51,9 @@ private:
 	// Channel Manager
 	std::vector<Channel*> GetChannelsByClient(Client *c);
 	Channel* GetChannelByName(const std::string& name);
+
+	// Clients Manager
+	Client *GetUserByNickname(std::string nickname);
 
 public:
 	Server(int port, std::string password);
