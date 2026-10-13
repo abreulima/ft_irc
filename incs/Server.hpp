@@ -15,6 +15,8 @@
 #define ERR_NICKNAMEINUSE 	std::string("433")
 #define ERR_NEEDMOREPARAMS 	std::string("461")
 #define ERR_NOSUCHCHANNEL 	std::string("403")
+#define ERR_CHANOPRIVSNEEDED 482
+#define SERVER_HOST std::string("42.pt")
 
 class Server
 {
@@ -29,7 +31,6 @@ private:
 
 	// Handlers
 	void handleCommands(size_t fd_id, std::vector<std::string>& messages);
-
 	void HandleCAP(Client *c, std::string line);
 	void HandleInvite(Client *c, Command::Invite data);
 	void HandleJoin(Client *c, Command::Join data);
@@ -41,13 +42,11 @@ private:
 	void HandleMode(Client *c, Command::Mode data);
 	void HandleQuit(Client *c, Command::Quit data);
 
-	// void HandlePRIVMSG();
-	// void HandleUSER();
-
-	// Send
+	// Senders
 	void SendToClient(Client c, std::string message);
 	void SendToChannel(Channel c, std::string message, Client *exclude);
 	void SendToChannels(std::vector<Channel *> channels, std::string message, Client *exclude);
+	void SendCode(Client c, int codeNum, std::string channel, std::string message);
 
 	// Channel Manager
 	std::vector<Channel*> GetChannelsByClient(Client *c);

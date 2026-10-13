@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <cstdlib>
 #include <errno.h>
+#include <sstream>
 
 static uint16_t parsePort(const std::string& s)
 {
@@ -168,30 +169,28 @@ void Server::HandleJoin(Client *c, Command::Join data)
 {
 	if (data.channel.empty() || data.channel.at(0) != '#')
 		return;
+	
+	// Search for the channel
+	std::map<std::string, Channel>::iterator it;
+	it = channels.find(data.channel);
 
-	// is this ugly? !not invite only or !not usepersmission
-	if (channels[data.channel].modes.isInviteOnly && !c->useInvite(data.channel))
-		return;
+	bool isNew = (it == channels.end());
 
-	Role role;
-	std::string res = c->GetPrefix() + " JOIN " + data.channel;
-	if (channels[data.channel].CountMembers() > 0)
-	{
-		role.isOperator = false;
-	}
-	else
+	if (isNew)
 	{
 		channels[data.channel] = Channel();
-		role.isOperator = true;
 	}
 
-	channels[data.channel].Add(c, role);
-	SendToChannel(channels[data.channel], res, 0);
-
-	// this is ugly
-
-	// accessing a map with operator[] creates the entry if it doesn't exist.
 	Channel &channel = channels[data.channel];
+
+	Role role;
+	role.isOperator = isNew ? true : false;
+	channel.Add(c, role);
+
+	std::string res = c->GetPrefix() + " JOIN " + data.channel;
+	SendToChannel(channel, res, NULL);
+
+
 	std::string nickList;
 
 	for (std::map<Client *, Role>::iterator it(channel.clients.begin()); it != channel.clients.end(); it++)
@@ -204,10 +203,10 @@ void Server::HandleJoin(Client *c, Command::Join data)
 		nickList += " ";
 	}
 
-	SendToChannel(channels[data.channel], std::string("") + ":42.pt 353 " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
-	SendToChannel(channels[data.channel], std::string("") + ":42.pt 366 " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
+	SendToChannel(channel, std::string("") + ":42.pt 353 " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
+	SendToChannel(channel, std::string("") + ":42.pt 366 " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
 
-	if (channels[data.channel].getTopic().size() > 0)
+	if (channel.getTopic().size() > 0)
 	{
 		std::string topic = ":42.pt " + RPL_TOPIC + " " + c->GetNickname() + " " + data.channel + " :" + channels[data.channel].getTopic();
 		SendToClient(*c, topic);
@@ -310,15 +309,28 @@ void Server::HandleNick(Client *c, Command::Nick data)
 
 void Server::HandleInvite(Client *c, Command::Invite data)
 {
-	// TODO: check mode is invite only
-	// TODO: total refactor
 
-	if (channels.find(data.channel) != channels.end())
+	// No channel
+	if (channels.find(data.channel) == channels.end())
 		return;
+
+	Channel &channel = channels[data.channel];
+
+	std::cout << "Oiii" << std::endl;
+	std::cout << channel.modes.isInviteOnly << " " << channel.IsOperator(c) << std::endl;
+ 
+	// Channel is Invite Only and Sender isn't operator.
+	if (channel.modes.isInviteOnly && !channel.IsOperator(c))
+	{
+		SendCode(*c, ERR_CHANOPRIVSNEEDED, data.channel, "You aren't allowed.");
+		return ;
+	}
 
 	Client *invited = Server::GetUserByNickname(data.nickname);
+
 	if (!invited)
 		return;
+	
 	invited->addInvite(data.channel);
 
 	std::string msg = c->GetPrefix() + " INVITE " + data.nickname + " " + data.channel;
@@ -501,6 +513,22 @@ void Server::SendToClient(Client c, std::string message)
 	std::cerr << "\033[32m" << "Server says: " << message << "\033[0m\n";
 	message += "\r\n";
 	send(c.GetFD(), message.c_str(), message.size(), 0);
+}
+
+
+void Server::SendCode(Client c, int codeNum, std::string channel, std::string message)
+{
+	std::stringstream ss;
+	ss << codeNum;
+
+	std::string res = ":" + SERVER_HOST + " " + ss.str() + " ";
+	res += c.GetNickname() + " ";
+	res += channel + " :";
+	res += message;
+
+	std::cerr << "\033[32m" << "Server says: " << res << "\033[0m\n";
+	res += "\r\n";
+	send(c.GetFD(), res.c_str(), res.size(), 0);
 }
 
 void Server::SendToChannel(Channel c, std::string message, Client *exclude)

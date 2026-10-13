@@ -68,6 +68,7 @@ Type Parser::ProcessLine(std::string message)
 			invite.channel = messages.at(2);
 			return INVITE;
 		}
+		return ERROR;
 	}
 	else if (message.compare(0, 3, "WHO") == 0)
 	{
