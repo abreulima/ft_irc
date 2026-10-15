@@ -98,7 +98,10 @@ void Server::Run()
 
 				if (numBytes <= 0)
 				{
-					close(fds.at(i).fd);
+					int fd = fds.at(i).fd;
+
+					close(fd);
+					clients.erase(fd);
 					fds.erase(fds.begin() + 1);
 					continue;
 				}
@@ -106,7 +109,6 @@ void Server::Run()
 				{
 					Parser parser;
 					std::vector<std::string> messages = parser.Split(std::string(incoming, numBytes));
-
 					handleCommands(i, messages);
 				}
 			}
@@ -127,9 +129,9 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 		Type cmd = parser.ProcessLine(message);
 
 		if (cmd == ERROR)
-			std::cerr << "\033[31m" << "User says: " << message << "\033[0m" << std::endl;
+			std::cerr << "\033[31m" << "User (" + c.GetNickname() + ") : " << message << "\033[0m" << std::endl;
 		else
-			std::cerr << "\033[33m" << "User says: " << message << "\033[0m" << std::endl;
+			std::cerr << "\033[33m" << "User (" + c.GetNickname() + ") : " << message << "\033[0m" << std::endl;
 
 		switch (cmd)
 		{
@@ -141,11 +143,16 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 			case JOIN:		HandleJoin(&c, parser.join);			break;
 			case KICK:		HandleKick(&c, parser.kick);			break;
 			case TOPIC:		HandleTopic(&c, parser.topic);			break;
-			case ERROR:												break;
 			case WHO:		HandleWho(&c, parser.who);				break;
 			case MODE:		HandleMode(&c, parser.mode);			break;
 			case QUIT:		HandleQuit(&c, parser.quit);			break;
-			default:		std::cout << "UNKNOWN\n";				break;
+			
+			case ERROR:
+				break;
+			
+			default:
+				std::cout << "UNKNOWN\n";				
+				break;
 		}
 	}
 }
@@ -154,14 +161,13 @@ void Server::HandleCAP(Client *c, std::string line)
 {
 	if (line.compare(0, 6, "CAP LS") == 0)
 	{
-		std::string response = ":42.pt CAP * LS 302 :";
-		SendToClient(*c, response);
+		c->SetIsCapEnded(false);
+		SendToClient(*c, ":42.pt CAP * LS :");
 	}
 	else if (line.compare(0, 7, "CAP END") == 0)
-	{
-		std::string response = ":42.pt 001 " + c->GetNickname() + " :";
-		response += "Hello dear evaluator!";
-		SendToClient(*c, response);
+	{	
+		c->SetIsCapEnded(true);
+		TryRegister(c);
 	}
 }
 
@@ -215,12 +221,10 @@ void Server::HandleJoin(Client *c, Command::Join data)
 
 void Server::HandleTopic(Client *c, Command::Topic data)
 {
-	// if channel doesnt exists it segfaults
+
 	if (channels.find(data.channel) == channels.end())
 	{
-		std::string res;
-		res = ":42.pt " + ERR_NOSUCHCHANNEL + " " + c->GetNickname() + " " + data.channel + " :No such channel";
-		SendToClient(*c, res);
+		SendCode(*c, ERR_NOSUCHCHANNEL, data.channel, "No such channel");
 		return;
 	}
 
@@ -243,68 +247,49 @@ void Server::HandleKick(Client *c, Command::Kick data)
 	Channel &channel = channels[data.channel];
 
 	Role role = channel.clients.at(c);
-
-	// 482 is ERR_CHANOPRIVSNEEDED.
 	if (!role.isOperator)
 	{
-		std::string not_operator = ":42.pt 482 " + c->GetNickname() + " " + data.nickname + " :403 Forbidden - Not an Operator";
-		SendToClient(*c, not_operator);
+		SendCode(*c, ERR_CHANOPRIVSNEEDED, data.channel, "403 Forbidden - Not an Operator");
 		return;
 	}
 
 	Client *kicked = channel.GetUserByNickname(data.nickname);
-	// 401 is ERR_NOSUCHNICK
 	if (!kicked)
 	{
-		std::string no_such_nick = ":42.pt 401 " + c->GetNickname() + " " + data.nickname + " :404 User Not Found";
-		SendToClient(*c, no_such_nick);
+		SendCode(*c, ERR_NOSUCHNICK, data.nickname, "404 User Not Found");
 		return;
-		// :<server> 401 <requesting_nick> <target> :No such nick/channel
 	}
 
+	channel.Remove(kicked);
+	
 	data.reason = data.reason.empty() ? c->GetNickname() : data.reason;
-
 	std::string res = c->GetPrefix() + " KICK " + data.channel + " " + data.nickname + " :" + data.reason;
-	SendToClient(*c, res);
-	SendToChannel(channel, res, c);
-
-	if (kicked)
-		channel.Remove(kicked);
+	SendToChannel(channel, res, NULL);
 }
 
 void Server::HandleNick(Client *c, Command::Nick data)
 {
-	// Check if nickname isn't being used
 
-	/*
-	std::map<int, Client>::iterator it;
-	it = clients.begin();
-
-	while (it != clients.end())
+	if (c->GetNickname() == data.nickname)
+		return ;
+		
+	if (IsNicknameInUse(data.nickname, c))
 	{
-
-		if (&it->second == c)
-		{
-			it++;
-			continue;
-		}
-
-		if (it->second.GetNickname() == data.nickname)
-		{
-			std::string userNickname = c->GetNickname().empty() ? "*" : c->GetNickname();
-			std::string res;
-			res += ":42.pt " + ERR_NICKNAMEINUSE + " " + userNickname + " ";
-			res += data.nickname + " :Nickname already in use.";
-			SendToClient(*c, res);
-			return ;
-		}
-		it++;
+		SendCode(*c, ERR_NICKNAMEINUSE, data.nickname, "Nickname is taken.");
+		return ;
 	}
-	*/
 
-	std::string res = c->GetPrefix() + " NICK " + data.nickname;
-	SendToChannels(GetChannelsByClient(c), res, NULL);
+    std::string res = c->GetPrefix() + " NICK :" + data.nickname;
+
+	if (c->IsRegistered())
+	{
+		SendToClient(*c, res);
+		SendToChannels(GetChannelsByClient(c), res, NULL);
+	}
+
 	c->SetNickname(data.nickname);
+
+	TryRegister(c);
 }
 
 void Server::HandleInvite(Client *c, Command::Invite data)
@@ -315,9 +300,6 @@ void Server::HandleInvite(Client *c, Command::Invite data)
 		return;
 
 	Channel &channel = channels[data.channel];
-
-	std::cout << "Oiii" << std::endl;
-	std::cout << channel.modes.isInviteOnly << " " << channel.IsOperator(c) << std::endl;
  
 	// Channel is Invite Only and Sender isn't operator.
 	if (channel.modes.isInviteOnly && !channel.IsOperator(c))
@@ -340,7 +322,6 @@ void Server::HandleInvite(Client *c, Command::Invite data)
 
 void Server::HandlePrivMsg(Client *c, Command::Priv data)
 {
-	std::cout << "PRIVMSG from " << c->GetNickname() << " fd=" << c->GetFD() << std::endl;
 	std::string res = c->GetPrefix() + " PRIVMSG " + data.target + " " + data.content;
 
 	if (data.target.empty())
@@ -516,15 +497,22 @@ void Server::SendToClient(Client c, std::string message)
 }
 
 
-void Server::SendCode(Client c, int codeNum, std::string channel, std::string message)
+void Server::SendCode(Client c, int codeNum, std::string target, std::string message)
 {
 	std::stringstream ss;
-	ss << codeNum;
+	ss << std::setw(3) << std::setfill('0') << codeNum;
+
+	std::string nick = c.GetNickname();
+	if (nick.empty())
+		nick = "*";
 
 	std::string res = ":" + SERVER_HOST + " " + ss.str() + " ";
-	res += c.GetNickname() + " ";
-	res += channel + " :";
-	res += message;
+	res += nick;
+
+	if (!target.empty())
+		res += " " + target;
+
+	res += " :" + message;
 
 	std::cerr << "\033[32m" << "Server says: " << res << "\033[0m\n";
 	res += "\r\n";
@@ -583,19 +571,51 @@ Channel *Server::GetChannelByName(const std::string &name)
 Client *Server::GetUserByNickname(std::string nickname)
 {
 	std::map<int, Client>::iterator it;
-
 	it = clients.begin();
-	std::cout << nickname << std::endl;
-
 	while (it != clients.end())
 	{
 		Client *member = &it->second;
-
-		std::cout << member->GetNickname() << std::endl;
-
 		if (member->GetNickname() == nickname)
 			return member;
 		it++;
 	}
 	return NULL;
+}
+
+bool Server::IsNicknameInUse(std::string nickname, Client* exclude)
+{
+	std::map<int, Client>::iterator it;
+	it = clients.begin();
+
+	while (it != clients.end())
+	{
+		Client *member = &it->second;
+		
+		if (member != exclude &&
+			member->GetNickname() == nickname)
+			return true;
+		
+		it++;
+	}
+	return false;
+}
+
+void Server::TryRegister(Client *c)
+{
+	if (c->IsRegistered())
+		return ;
+	
+	if (c->GetNickname().empty())
+		return ;
+
+	if (IsNicknameInUse(c->GetNickname(), c))
+		return ;
+
+	if (!c->IsCapEnded())
+		return ;
+
+	c->SetRegistered(true);
+
+	SendCode(*c, RPL_WELCOME, "", "Hello dear evaluator!");
+
 }

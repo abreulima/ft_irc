@@ -9,14 +9,17 @@
 #include <vector>
 #include <poll.h>
 #include <stdint.h>
+#include <iomanip>
 
-#define RPL_TOPIC 			std::string("332")
-#define RPL_CHANNELMODEIS 	std::string("324")
-#define ERR_NICKNAMEINUSE 	std::string("433")
-#define ERR_NEEDMOREPARAMS 	std::string("461")
-#define ERR_NOSUCHCHANNEL 	std::string("403")
-#define ERR_CHANOPRIVSNEEDED 482
-#define SERVER_HOST std::string("42.pt")
+#define RPL_WELCOME				001
+#define RPL_TOPIC 				std::string("332")
+#define RPL_CHANNELMODEIS 		std::string("324")
+#define ERR_NEEDMOREPARAMS 		std::string("461")
+#define ERR_NOSUCHCHANNEL 		403
+#define ERR_CHANOPRIVSNEEDED 	482
+#define ERR_NICKNAMEINUSE 		433
+#define ERR_NOSUCHNICK			401
+#define SERVER_HOST 			std::string("42.pt")
 
 class Server
 {
@@ -54,6 +57,9 @@ private:
 
 	// Clients Manager
 	Client *GetUserByNickname(std::string nickname);
+	bool IsNicknameInUse(std::string nickname, Client* exclude);
+	void TryRegister(Client *c);
+
 
 public:
 	Server(std::string port, std::string password);

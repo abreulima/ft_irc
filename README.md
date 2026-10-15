@@ -35,7 +35,7 @@
 #### PERFECTING
 - [ ] Join / auth
 - [ ] What else in nickname?
-- [ ] Multiple, unique nicknames / usernames
+- [X] Multiple, unique nicknames / usernames
 - [ ] Messages to channels you are not auth
 - [ ] Check permission for each command
 - [ ] Permission chain mess up / stress
@@ -53,15 +53,11 @@
 - [ ] Disconnections
 - [ ] Malformatted messages
 
-\* A solução [para multiplos nicks] é um pouco trabalhosa porque o HexChat não encerra a conexão e tenta com _Second choice..._ ele usa o /NICK várias vezes até conseguir na mesma conexão.
-
 ## Modes
 
 O parser do /MODE **deve** funcionar, mas nem tudo que depende dele, como o /JOIN por exemplo, está implementado.
 
 ## Crítico
-
-As vezes o servidor fica stalling (parece que está a espera de algo e não processa as entradas),  **eu (Ivan)** creio que isso é causada quando dois usuários possuem o mesmo *Nickname*.
 
 O parsing não é individual e o subject avisa que isso será testado, em nosso projeto atual, não é pessoal enviar mensagens incompletas e depois voltar a enviar.
 

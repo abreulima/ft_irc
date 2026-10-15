@@ -12,9 +12,11 @@ private:
     std::string _nickname;
     std::string _hostname;
     std::set<std::string> _invites;
+    bool _isRegistered;
+    bool _isCapEnded;
 
 public:
-    Client() {};
+    Client();
     //Client(int fd) : _fd(fd) {};
     //void SetFd(int fd);
     int GetFD()const ; 
@@ -28,6 +30,12 @@ public:
     void SetNickname(const std::string& value);
     void SetHostname(const std::string& value);
     void addInvite(const std::string& value);
+
+    bool IsRegistered();
+    void SetRegistered(bool value);
+
+    bool IsCapEnded();
+    void SetIsCapEnded(bool value);
 
     std::string GetPrefix();
 
