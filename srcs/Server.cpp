@@ -1,15 +1,17 @@
 #include "Server.hpp"
 #include "Parser.hpp"
 
-#include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <iostream>
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <cstdlib>
 #include <errno.h>
 #include <sstream>
+#include <string>
 
 static uint16_t parsePort(const std::string& s)
 {
@@ -78,13 +80,20 @@ void Server::Run()
 		// Servidor recebeu algo!
 		if (fds.at(0).revents & POLLIN)
 		{
-			int connectionFD = accept(serverFD, NULL, NULL);
+			struct sockaddr_in client_addr;
+			socklen_t client_len = sizeof(client_addr);
+
+			int connectionFD = accept(serverFD, (struct sockaddr *)&client_addr, &client_len);
+			
 			if (connectionFD >= 0)
 			{
+
+				std::string clientIPV4 = inet_ntoa(client_addr.sin_addr);
+
 				fds.push_back((pollfd){connectionFD, POLLIN, 0});
 				clients[connectionFD] = Client();
 				clients[connectionFD].SetFD(connectionFD);
-				clients[connectionFD].SetHostname("user.host"); // Change to User IP.
+				clients[connectionFD].SetHostname(clientIPV4);
 			}
 		}
 
@@ -195,7 +204,6 @@ void Server::HandleJoin(Client *c, Command::Join data)
 
 	std::string res = c->GetPrefix() + " JOIN " + data.channel;
 	SendToChannel(channel, res, NULL);
-
 
 	std::string nickList;
 
@@ -344,18 +352,9 @@ void Server::HandlePrivMsg(Client *c, Command::Priv data)
 	}
 	else
 	{
-		std::map<int, Client>::iterator it;
-		it = clients.begin();
-
-		while (it != clients.end())
-		{
-			if (it->second.GetNickname().compare(data.target) == 0)
-			{
-				SendToClient(it->second, res);
-				return;
-			}
-			it++;
-		}
+		Client* receiver = GetUserByNickname(data.target);
+		if (receiver)
+			SendToClient(*receiver, res);
 	}
 
 	// TODO ERR_NOCLIENT
