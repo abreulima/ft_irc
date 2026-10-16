@@ -25,6 +25,7 @@ namespace Command
     struct Join
     {
         std::string channel;
+        std::string password;
     };
 
     struct Kick

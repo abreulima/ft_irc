@@ -55,9 +55,9 @@ Type Parser::ProcessLine(std::string message)
 	else if (messages.at(0).compare("JOIN") == 0)
 	{
 		if (messages.size() > 1)
-		{
 			join.channel = messages.at(1);
-		}
+		if (messages.size() > 2)
+			join.password = messages.at(2);
 		return JOIN;
 	}
 	else if (messages.at(0).compare("INVITE") == 0)

@@ -204,8 +204,10 @@ void Server::HandleJoin(Client *c, Command::Join data)
 
 	Channel &channel = channels[data.channel];
 
-	// is this ugly? !not invite only or !not usepersmission
+	// TODO: needs error handling
 	if (channel.modes.isInviteOnly && !c->useInvite(data.channel))
+		return ;
+	if (!channel.modes.password.empty() && data.password != channel.modes.password)
 		return ;
 
 	Role role;
