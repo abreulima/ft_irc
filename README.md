@@ -1,18 +1,9 @@
 # Tasks
 
-<!-- - [x] KICK
-- [x] PRIVMSG
-- [x] TOPIC
-- [x] MODE (leia a secção)
-- [ ] Nick (parcialmente, devido ao HexChat).
-- [ ] Join (Parcialmente, falta pedir senha, por limite, ou apenas entrar por convite).
-- [ ] Invite
-- [ ] Nao permitir que dois usuarios utilizam o mesmo Nickname *
-- [ ] Parsing do argc, argv -->
-
 #### REGISTRATION (PASS -> NICK -> USER)
 - [ ] Register with password
 - [x] Set nickname
+    - [ ] Nao permitir que dois usuarios utilizam o mesmo Nickname *
 - [x] Set username
 
 
@@ -24,20 +15,25 @@
 
 #### OPERATORS (CHANNEL)
 - [x] Kick
-- [ ] Invite
+- [x] Invite
 - [x] Topic
 
 #### MODE
-- [ ] Invite only               i
+- [x] Invite only               i
+    - [ ] Invite only can bypass the password, can it?
 - [x] Topic restricted          t
 - [ ] Set remove password       k
 - [x] Give / take operator      o
 - [ ] Set/remove user limit     l
 
+#### ERROR MESSAGES
+
+- [ ] placeholder for error messages for each event 
+
 #### PERFECTING
 - [ ] Registration
-    - [ ] Set User as authenticated
-    - [ ] Error Handling
+- [ ] Set User as authenticated
+- [ ] Error Handling
 - [ ] Join with modes
 - [ ] What else in nickname?
 - [X] Multiple, unique nicknames / usernames
