@@ -1,56 +1,50 @@
 #include "Parser.hpp"
 #include <iostream>
 
-/*
-	TODO: EVERYTHING IS WRONG in the following checks:
-	if (message.size() > 1)
- */
 Type Parser::ProcessLine(std::string message)
 {
-	// std::cout << "Client Says: " << "" << message << "" << std::endl;
-
 	std::vector<std::string> messages = Split(message, " ");
 
-	if (message.compare(0, 3, "CAP") == 0)
+	if (messages.at(0).compare("CAP") == 0)
 	{
 		return CAP;
 	}
-	else if (message.compare(0, 4, "PASS") == 0)
+	else if (messages.at(0).compare("PASS") == 0)
 	{
-		if (message.size() > 1)
+		if (messages.size() > 1)
 		{
 			pass.password = messages.at(1);
 		}
 		return PASS;
 	}
-	else if (message.compare(0, 4, "NICK") == 0)
+	else if (messages.at(0).compare("NICK") == 0)
 	{
-		if (message.size() > 1)
+		if (messages.size() > 1)
 		{
 			nick.nickname = messages.at(1);
 		}
 		return NICK;
 	}
-	else if (message.compare(0, 4, "USER") == 0)
+	else if (messages.at(0).compare("USER") == 0)
 	{
-		if (message.size() > 1)
+		if (messages.size() > 1)
 		{
 			user.username = messages.at(1);
 		}
 		return USER;
 	}
-	else if (message.compare(0, 7, "PRIVMSG") == 0)
+	else if (messages.at(0).compare("PRIVMSG") == 0)
 	{
-		if (message.size() > 1)
+		if (messages.size() > 1)
 		{
 			priv.target = messages.at(1);
 		}
 		priv.content = message.substr(message.find(":") + 1);
 		return PRIVMSG;
 	}
-	else if (message.compare(0, 4, "KICK") == 0)
+	else if (messages.at(0).compare("KICK") == 0)
 	{
-		if (message.size() >= 3)
+		if (messages.size() >= 3)
 		{
 			kick.channel = messages.at(1);
 			kick.nickname = messages.at(2);
@@ -58,27 +52,25 @@ Type Parser::ProcessLine(std::string message)
 		kick.reason = message.substr(message.find(":") + 1);
 		return KICK;
 	}
-	else if (message.compare(0, 4, "JOIN") == 0)
+	else if (messages.at(0).compare("JOIN") == 0)
 	{
-		if (message.size() > 1)
+		if (messages.size() > 1)
 		{
 			join.channel = messages.at(1);
 		}
 		return JOIN;
 	}
-	else if (message.compare(0, 6, "INVITE") == 0)
+	else if (messages.at(0).compare("INVITE") == 0)
 	{
 		if (messages.size() > 2)
 		{
-			std::cout << messages.at(1) << std::endl;
 			invite.nickname = messages.at(1);
-			std::cout << messages.at(2) << std::endl;
 			invite.channel = messages.at(2);
 			return INVITE;
 		}
 		return ERROR;
 	}
-	else if (message.compare(0, 3, "WHO") == 0)
+	else if (messages.at(0).compare("WHO") == 0)
 	{
 		if (messages.size() > 1)
 		{
@@ -86,7 +78,7 @@ Type Parser::ProcessLine(std::string message)
 		}
 		return WHO;
 	}
-	else if (message.compare(0, 4, "MODE") == 0)
+	else if (messages.at(0).compare("MODE") == 0)
 	{
 
 		if (messages.size() < 2)
@@ -158,14 +150,13 @@ Type Parser::ProcessLine(std::string message)
 		}
 		return MODE;
 	}
-	else if (message.compare(0, 4, "QUIT") == 0)
+	else if (messages.at(0).compare("QUIT") == 0)
 	{
 		quit.reason = message.substr(message.find(':', 0) + 1);
 		return QUIT;
 	}
-	else if (message.compare(0, 5, "TOPIC") == 0)
+	else if (messages.at(0).compare("TOPIC") == 0)
 	{
-		std::cout << message << std::endl;
 		if (messages.size() == 2)
 		{
 			topic.channel = messages.at(1);
