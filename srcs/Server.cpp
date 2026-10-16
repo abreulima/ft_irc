@@ -173,7 +173,7 @@ void Server::HandleCAP(Client *c, std::string line)
 	if (line.compare(0, 6, "CAP LS") == 0)
 	{
 		c->SetIsCapEnded(false);
-		SendToClient(*c, SERVER_PREFIX + "CAP * LS :");
+		SendToClient(*c, std::string(SERVER_PREFIX) + "CAP * LS :");
 	}
 	else if (line.compare(0, 7, "CAP END") == 0)
 	{	
@@ -185,7 +185,7 @@ void Server::HandleCAP(Client *c, std::string line)
 void Server::HandlePass(Client *c, Command::Pass data)
 {
 	if (data.password != password) {
-		std::string res = SERVER_PREFIX + ReplyCodeToString(ERR_PASSWDMISMATCH) + " :Password mismatch.";
+		std::string res = std::string(SERVER_PREFIX) + ReplyCodeToString(ERR_PASSWDMISMATCH) + " :Password mismatch.";
 		SendToClient(*c, res);
 	}
 }
@@ -227,12 +227,12 @@ void Server::HandleJoin(Client *c, Command::Join data)
 		nickList += " ";
 	}
 
-	SendToChannel(channel, SERVER_PREFIX + ReplyCodeToString(RPL_NAMREPLY) + " " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
-	SendToChannel(channel, SERVER_PREFIX + ReplyCodeToString(RPL_ENDOFNAMES) + " " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
+	SendToChannel(channel, std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_NAMREPLY) + " " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
+	SendToChannel(channel, std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_ENDOFNAMES) + " " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
 
 	if (channel.getTopic().size() > 0)
 	{
-		std::string topic = SERVER_PREFIX + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + channels[data.channel].getTopic();
+		std::string topic = std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + channels[data.channel].getTopic();
 		SendToClient(*c, topic);
 	}
 }
@@ -250,7 +250,7 @@ void Server::HandleTopic(Client *c, Command::Topic data)
 		channels.at(data.channel).modes.isTopicOpOnly == false)
 	{
 		std::string res;
-		res = SERVER_PREFIX + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + data.topic;
+		res = std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + data.topic;
 		SendToChannel(channels[data.channel], res, NULL);
 		channels.at(data.channel).setTopic(data.topic);
 	}
@@ -386,7 +386,7 @@ void Server::HandleWho(Client *c, Command::Who data)
 		Role role = it->second;
 
 		std::string res;
-		res += SERVER_PREFIX + ReplyCodeToString(RPL_WHOREPLY) + " " + c->GetNickname() + " " + data.channel + " "; // 42.pt 352 Alice  #hello
+		res += std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_WHOREPLY) + " " + c->GetNickname() + " " + data.channel + " "; // 42.pt 352 Alice  #hello
 		res += member->GetUserName() + " " + member->GetHostName() + " 42.pt " + member->GetNickname() + " ";
 		res += role.isOperator ? "H@" : "H";
 		res += " :0 realname";
@@ -396,7 +396,7 @@ void Server::HandleWho(Client *c, Command::Who data)
 	}
 
 	//   :irc.server 315 Alice #Hello :End of /WHO list.
-	std::string res = SERVER_PREFIX + ReplyCodeToString(RPL_ENDOFWHO) + " " + c->GetNickname() + " " + data.channel + " :End of /WHO list.";
+	std::string res = std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_ENDOFWHO) + " " + c->GetNickname() + " " + data.channel + " :End of /WHO list.";
 	SendToClient(*c, res);
 }
 
@@ -412,7 +412,7 @@ void Server::HandleMode(Client *c, Command::Mode data)
 
 	if (!data.isOperation)
 	{
-		std::string res = SERVER_PREFIX + ReplyCodeToString(RPL_CHANNELMODEIS) + " " + c->GetNickname() + " " + data.channel + " " + channel->GetModesString();
+		std::string res = std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_CHANNELMODEIS) + " " + c->GetNickname() + " " + data.channel + " " + channel->GetModesString();
 		SendToClient(*c, res);
 		return;
 	}
@@ -459,7 +459,7 @@ void Server::HandleMode(Client *c, Command::Mode data)
 	}
 
 	// Send it back to everyone
-	std::string res = SERVER_PREFIX + "MODE " + data.channel + " ";
+	std::string res = std::string(SERVER_PREFIX) + "MODE " + data.channel + " ";
 	res += data.modes;
 	std::map<char, std::string>::iterator it;
 	it = data.args.begin();
@@ -514,7 +514,7 @@ void Server::SendCode(Client c, int codeNum, std::string target, std::string mes
 	if (nick.empty())
 		nick = "*";
 
-	std::string res = SERVER_PREFIX + ss.str() + " ";
+	std::string res = std::string(SERVER_PREFIX) + ss.str() + " ";
 	res += nick;
 
 	if (!target.empty())

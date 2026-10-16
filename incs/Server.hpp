@@ -12,8 +12,8 @@
 #include <stdint.h>
 #include <iomanip>
 
-#define SERVER_HOST 			std::string("42.pt")
-#define SERVER_PREFIX 			std::string(":" + SERVER_HOST + " ")
+#define SERVER_HOST 			"42.pt"
+#define SERVER_PREFIX 			":" SERVER_HOST " "
 
 class Server
 {

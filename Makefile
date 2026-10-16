@@ -27,7 +27,7 @@ fclean: clean
 re: fclean all
 
 go: all
-	./$(NAME)
+	./$(NAME) 6667 ""
 
 -include $(DEPS)
 
