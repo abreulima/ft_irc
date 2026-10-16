@@ -11,15 +11,8 @@
 #include <stdint.h>
 #include <iomanip>
 
-#define RPL_WELCOME				001
-#define RPL_TOPIC 				std::string("332")
-#define RPL_CHANNELMODEIS 		std::string("324")
-#define ERR_NEEDMOREPARAMS 		std::string("461")
-#define ERR_NOSUCHCHANNEL 		403
-#define ERR_CHANOPRIVSNEEDED 	482
-#define ERR_NICKNAMEINUSE 		433
-#define ERR_NOSUCHNICK			401
 #define SERVER_HOST 			std::string("42.pt")
+#define SERVER_PREFIX 			std::string(":" + SERVER_HOST + " ")
 
 class Server
 {

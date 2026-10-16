@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Parser.hpp"
+#include "Replies.hpp"
 
 #include <iostream>
 #include <sys/socket.h>
@@ -162,7 +163,7 @@ void Server::HandleCAP(Client *c, std::string line)
 	if (line.compare(0, 6, "CAP LS") == 0)
 	{
 		c->SetIsCapEnded(false);
-		SendToClient(*c, ":42.pt CAP * LS :");
+		SendToClient(*c, SERVER_PREFIX + "CAP * LS :");
 	}
 	else if (line.compare(0, 7, "CAP END") == 0)
 	{	
@@ -209,12 +210,12 @@ void Server::HandleJoin(Client *c, Command::Join data)
 		nickList += " ";
 	}
 
-	SendToChannel(channel, std::string("") + ":42.pt 353 " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
-	SendToChannel(channel, std::string("") + ":42.pt 366 " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
+	SendToChannel(channel, SERVER_PREFIX + ReplyCodeToString(RPL_NAMREPLY) + " " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
+	SendToChannel(channel, SERVER_PREFIX + ReplyCodeToString(RPL_ENDOFNAMES) + " " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
 
 	if (channel.getTopic().size() > 0)
 	{
-		std::string topic = ":42.pt " + RPL_TOPIC + " " + c->GetNickname() + " " + data.channel + " :" + channels[data.channel].getTopic();
+		std::string topic = SERVER_PREFIX + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + channels[data.channel].getTopic();
 		SendToClient(*c, topic);
 	}
 }
@@ -232,7 +233,7 @@ void Server::HandleTopic(Client *c, Command::Topic data)
 		channels.at(data.channel).modes.isTopicOpOnly == false)
 	{
 		std::string res;
-		res = ":42.pt 332 " + c->GetNickname() + " " + data.channel + " :" + data.topic;
+		res = SERVER_PREFIX + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + data.topic;
 		SendToChannel(channels[data.channel], res, NULL);
 		channels.at(data.channel).setTopic(data.topic);
 	}
@@ -377,7 +378,7 @@ void Server::HandleWho(Client *c, Command::Who data)
 		Role role = it->second;
 
 		std::string res;
-		res += ":42.pt 352 " + c->GetNickname() + " " + data.channel + " "; // 42.pt 352 Alice  #hello
+		res += SERVER_PREFIX + ReplyCodeToString(RPL_WHOREPLY) + " " + c->GetNickname() + " " + data.channel + " "; // 42.pt 352 Alice  #hello
 		res += member->GetUserName() + " " + member->GetHostName() + " 42.pt " + member->GetNickname() + " ";
 		res += role.isOperator ? "H@" : "H";
 		res += " :0 realname";
@@ -387,15 +388,15 @@ void Server::HandleWho(Client *c, Command::Who data)
 	}
 
 	//   :irc.server 315 Alice #Hello :End of /WHO list.
-	std::string res = ":42.pt 315 " + c->GetNickname() + " " + data.channel + " :End of /WHO list.";
+	std::string res = SERVER_PREFIX + ReplyCodeToString(RPL_ENDOFWHO) + " " + c->GetNickname() + " " + data.channel + " :End of /WHO list.";
 	SendToClient(*c, res);
 }
 
+// :irc.server 324 <nick> #Hello +nt
+// 324 RPL_CHANNELMODEIS
+// std::cout << data.channel << std::endl;
 void Server::HandleMode(Client *c, Command::Mode data)
 {
-	// :irc.server 324 <nick> #Hello +nt
-	// 324 RPL_CHANNELMODEIS
-	// std::cout << data.channel << std::endl;
 	Channel *channel = GetChannelByName(data.channel);
 
 	if (!channel)
@@ -403,7 +404,7 @@ void Server::HandleMode(Client *c, Command::Mode data)
 
 	if (!data.isOperation)
 	{
-		std::string res = ":42.pt " + RPL_CHANNELMODEIS + " " + c->GetNickname() + " " + data.channel + " " + channel->GetModesString();
+		std::string res = SERVER_PREFIX + ReplyCodeToString(RPL_CHANNELMODEIS) + " " + c->GetNickname() + " " + data.channel + " " + channel->GetModesString();
 		SendToClient(*c, res);
 		return;
 	}
@@ -450,7 +451,7 @@ void Server::HandleMode(Client *c, Command::Mode data)
 	}
 
 	// Send it back to everyone
-	std::string res = ":42.pt MODE " + data.channel + " ";
+	std::string res = SERVER_PREFIX + "MODE " + data.channel + " ";
 	res += data.modes;
 	std::map<char, std::string>::iterator it;
 	it = data.args.begin();
@@ -496,7 +497,6 @@ void Server::SendToClient(Client c, std::string message)
 	send(c.GetFD(), message.c_str(), message.size(), 0);
 }
 
-
 void Server::SendCode(Client c, int codeNum, std::string target, std::string message)
 {
 	std::stringstream ss;
@@ -506,7 +506,7 @@ void Server::SendCode(Client c, int codeNum, std::string target, std::string mes
 	if (nick.empty())
 		nick = "*";
 
-	std::string res = ":" + SERVER_HOST + " " + ss.str() + " ";
+	std::string res = SERVER_PREFIX + ss.str() + " ";
 	res += nick;
 
 	if (!target.empty())
@@ -617,5 +617,4 @@ void Server::TryRegister(Client *c)
 	c->SetRegistered(true);
 
 	SendCode(*c, RPL_WELCOME, "", "Hello dear evaluator!");
-
 }
