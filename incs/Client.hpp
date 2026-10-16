@@ -12,6 +12,7 @@ private:
     std::string _nickname;
     std::string _hostname;
     std::set<std::string> _invites;
+    bool _isAuthenticated;
     bool _isRegistered;
     bool _isCapEnded;
 
@@ -30,6 +31,9 @@ public:
     void SetNickname(const std::string& value);
     void SetHostname(const std::string& value);
     void addInvite(const std::string& value);
+
+    bool IsAuthenticated();
+    void SetAuthenticated(bool value);
 
     bool IsRegistered();
     void SetRegistered(bool value);

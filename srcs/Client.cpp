@@ -31,6 +31,16 @@ bool Client::useInvite(const std::string &ref)
 	return (false);
 }
 
+bool Client::IsAuthenticated()
+{
+	return _isAuthenticated;
+}
+
+void Client::SetAuthenticated(bool value)
+{
+	_isAuthenticated = value;
+}
+
 bool Client::IsRegistered()
 {
 	return _isRegistered;
@@ -40,7 +50,6 @@ void Client::SetRegistered(bool value)
 {
 	_isRegistered = value;
 }
-
 
 void Client::SetFD(int value)
 {

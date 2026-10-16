@@ -10,12 +10,14 @@
 - [ ] Nao permitir que dois usuarios utilizam o mesmo Nickname *
 - [ ] Parsing do argc, argv -->
 
-#### REGULAR USERS
-- [x] Join server
-- [ ] Join with password
+#### REGISTRATION (PASS -> NICK -> USER)
+- [ ] Register with password
 - [x] Set nickname
 - [x] Set username
-- [ ] Join channel
+
+
+#### BASIC CHANNEL USAGE
+- [x] Join channel (Improvements related to modes are down the list)
 - [x] Send and reveive private messages
 - [x] Send and receive messages (channel)
 
@@ -33,7 +35,10 @@
 - [ ] Set/remove user limit     l
 
 #### PERFECTING
-- [ ] Join / auth
+- [ ] Registration
+    - [ ] Set User as authenticated
+    - [ ] Error Handling
+- [ ] Join with modes
 - [ ] What else in nickname?
 - [X] Multiple, unique nicknames / usernames
 - [ ] Messages to channels you are not auth
@@ -41,9 +46,10 @@
 - [ ] Permission chain mess up / stress
 - [ ] Flooding channel while client is busy
 
-#### OPTIONAL
+#### OPTIONAL (BONUS)
 - [ ] Timeout
 - [ ] Ping
+- [ ] Part from a Channel
 
 #### LOW LEVEL
 - [ ] Buffers

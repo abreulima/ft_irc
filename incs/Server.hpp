@@ -1,19 +1,25 @@
 #ifndef SERVER_HPP
-#define SERVER_HPP
+# define SERVER_HPP
 
-#include "Channel.hpp"
-#include "Client.hpp"
-#include "Parser.hpp"
-#include "Replies.hpp"
+# include "Channel.hpp"
+# include "Client.hpp"
+# include "Parser.hpp"
+# include "Replies.hpp"
 
-#include <map>
-#include <vector>
-#include <poll.h>
-#include <stdint.h>
-#include <iomanip>
+# include <map>
+# include <vector>
+# include <poll.h>
+# include <stdint.h>
+# include <iomanip>
 
-#define SERVER_HOST 			"42.pt"
-#define SERVER_PREFIX 			":" SERVER_HOST " "
+# define SERVER_HOST	"42.pt"
+# define SERVER_PREFIX	":" SERVER_HOST " "
+
+# define RESET			"\033[0m\n"
+# define RED			"\033[31m"
+# define GREEN			"\033[32m"
+# define YELLOW			"\033[33m"
+# define BLUE			"\033[34m"
 
 class Server
 {
@@ -54,7 +60,6 @@ private:
 	Client *GetUserByNickname(std::string nickname);
 	bool IsNicknameInUse(std::string nickname, Client* exclude);
 	void TryRegister(Client *c);
-
 
 public:
 	Server(std::string port, std::string password);

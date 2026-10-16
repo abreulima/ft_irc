@@ -88,7 +88,6 @@ void Server::Run()
 			
 			if (connectionFD >= 0)
 			{
-
 				std::string clientIPV4 = inet_ntoa(client_addr.sin_addr);
 
 				fds.push_back((pollfd){connectionFD, POLLIN, 0});
@@ -106,6 +105,7 @@ void Server::Run()
 				char incoming[513];
 				int numBytes = recv(fds.at(i).fd, incoming, 512, 0);
 
+				// TODO: Not sure but I think we should handle == 0 apart from errors.
 				if (numBytes <= 0)
 				{
 					int fd = fds.at(i).fd;
@@ -139,9 +139,9 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 		Type cmd = parser.ProcessLine(message);
 
 		if (cmd == ERROR)
-			std::cerr << "\033[31m" << "User (" + c.GetNickname() + ") : " << message << "\033[0m" << std::endl;
+			std::cerr << RED << "User (" + c.GetNickname() + ") : " << message << RESET << std::endl;
 		else
-			std::cerr << "\033[33m" << "User (" + c.GetNickname() + ") : " << message << "\033[0m" << std::endl;
+			std::cerr << YELLOW << "User (" + c.GetNickname() + ") : " << message << RESET << std::endl;
 
 		switch (cmd)
 		{
@@ -182,14 +182,46 @@ void Server::HandleCAP(Client *c, std::string line)
 	}
 }
 
+// TODO: Missing Error Handling
 void Server::HandlePass(Client *c, Command::Pass data)
 {
-	if (data.password != password) {
-		std::string res = std::string(SERVER_PREFIX) + ReplyCodeToString(ERR_PASSWDMISMATCH) + " :Password mismatch.";
-		SendToClient(*c, res);
+	if (c->IsAuthenticated()) {
+		SendToClient(*c, std::string(SERVER_PREFIX) + ReplyCodeToString(ERR_ALREADYREGISTERED) + " :Already Registered.");
+	}
+	if (data.password.compare(password) == 0) {
+		c->SetAuthenticated(true);
+	} else {
+		SendToClient(*c, std::string(SERVER_PREFIX) + ReplyCodeToString(ERR_PASSWDMISMATCH) + " :Password mismatch.");
 	}
 }
 
+// TODO: If there's a password set, this request can only be handled after PASS 
+void Server::HandleNick(Client *c, Command::Nick data)
+{
+
+	if (c->GetNickname() == data.nickname)
+		return ;
+		
+	if (IsNicknameInUse(data.nickname, c))
+	{
+		SendCode(*c, ERR_NICKNAMEINUSE, data.nickname, "Nickname is taken.");
+		return ;
+	}
+
+    std::string res = c->GetPrefix() + " NICK :" + data.nickname;
+
+	if (c->IsRegistered())
+	{
+		SendToClient(*c, res);
+		SendToChannels(GetChannelsByClient(c), res, NULL);
+	}
+
+	c->SetNickname(data.nickname);
+
+	TryRegister(c);
+}
+
+// TODO: Missing Error Handling
 void Server::HandleJoin(Client *c, Command::Join data)
 {
 	if (data.channel.empty() || data.channel.at(0) != '#')
@@ -287,31 +319,6 @@ void Server::HandleKick(Client *c, Command::Kick data)
 	SendToChannel(channel, res, NULL);
 }
 
-void Server::HandleNick(Client *c, Command::Nick data)
-{
-
-	if (c->GetNickname() == data.nickname)
-		return ;
-		
-	if (IsNicknameInUse(data.nickname, c))
-	{
-		SendCode(*c, ERR_NICKNAMEINUSE, data.nickname, "Nickname is taken.");
-		return ;
-	}
-
-    std::string res = c->GetPrefix() + " NICK :" + data.nickname;
-
-	if (c->IsRegistered())
-	{
-		SendToClient(*c, res);
-		SendToChannels(GetChannelsByClient(c), res, NULL);
-	}
-
-	c->SetNickname(data.nickname);
-
-	TryRegister(c);
-}
-
 void Server::HandleInvite(Client *c, Command::Invite data)
 {
 
@@ -335,6 +342,8 @@ void Server::HandleInvite(Client *c, Command::Invite data)
 	
 	invited->addInvite(data.channel);
 
+	// TODO: Issuer and Invited clients should receive different messages.
+	// TODO: Issuer should receive RPL_INVITING instead of INVITE
 	std::string msg = c->GetPrefix() + " INVITE " + data.nickname + " " + data.channel;
 	SendToClient(*c, msg);
 	SendToClient(*invited, msg);
@@ -375,6 +384,7 @@ void Server::HandlePrivMsg(Client *c, Command::Priv data)
 // per user
 // :irc.server 352 Alice #Hello alice host1 irc.server Alice H@ :0 Alice
 // :<server> 352 <requester> <channel> <user> <host> <server> <nick> <flags> :<hopcount> <realname>
+// TODO OR NOT TODO: WHO handles nickname instead of channel as well.
 void Server::HandleWho(Client *c, Command::Who data)
 {
 
@@ -502,7 +512,7 @@ void Server::HandleQuit(Client *c, Command::Quit data)
 
 void Server::SendToClient(Client c, std::string message)
 {
-	std::cerr << "\033[32m" << "Server says: " << message << "\033[0m\n";
+	std::cerr << GREEN << "Server says: " << message << RESET << std::endl;
 	message += "\r\n";
 	send(c.GetFD(), message.c_str(), message.size(), 0);
 }
@@ -524,9 +534,7 @@ void Server::SendCode(Client c, int codeNum, std::string target, std::string mes
 
 	res += " :" + message;
 
-	std::cerr << "\033[32m" << "Server says: " << res << "\033[0m\n";
-	res += "\r\n";
-	send(c.GetFD(), res.c_str(), res.size(), 0);
+	SendToClient(c, message);
 }
 
 void Server::SendToChannel(Channel c, std::string message, Client *exclude)
