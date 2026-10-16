@@ -13,7 +13,15 @@ Type Parser::ProcessLine(std::string message)
 
 	if (message.compare(0, 3, "CAP") == 0)
 	{
-		return (CAP);
+		return CAP;
+	}
+	else if (message.compare(0, 4, "PASS") == 0)
+	{
+		if (message.size() > 1)
+		{
+			pass.password = messages.at(1);
+		}
+		return PASS;
 	}
 	else if (message.compare(0, 4, "NICK") == 0)
 	{
@@ -170,10 +178,6 @@ Type Parser::ProcessLine(std::string message)
 			topic.topic = message.substr(message.find(':', 0) + 1);
 		}
 		return TOPIC;
-	}
-	else if (message.compare(0, 4, "PASS") == 0)
-	{
-		return PASS;
 	}
 	return (ERROR);
 }

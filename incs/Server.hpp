@@ -4,6 +4,7 @@
 #include "Channel.hpp"
 #include "Client.hpp"
 #include "Parser.hpp"
+#include "Replies.hpp"
 
 #include <map>
 #include <vector>
@@ -28,6 +29,7 @@ private:
 	// Handlers
 	void handleCommands(size_t fd_id, std::vector<std::string>& messages);
 	void HandleCAP(Client *c, std::string line);
+	void HandlePass(Client *c, Command::Pass data);
 	void HandleInvite(Client *c, Command::Invite data);
 	void HandleJoin(Client *c, Command::Join data);
 	void HandleKick(Client *c, Command::Kick data);

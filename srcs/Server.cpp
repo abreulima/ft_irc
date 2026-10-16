@@ -146,6 +146,7 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 		switch (cmd)
 		{
 			case CAP:		HandleCAP(&c, message);					break;
+			case PASS:		HandlePass(&c, parser.pass);			break;
 			case NICK:		HandleNick(&c, parser.nick);			break;
 			case USER:		c.SetUsername(parser.user.username);	break;
 			case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
@@ -178,6 +179,14 @@ void Server::HandleCAP(Client *c, std::string line)
 	{	
 		c->SetIsCapEnded(true);
 		TryRegister(c);
+	}
+}
+
+void Server::HandlePass(Client *c, Command::Pass data)
+{
+	if (data.password != password) {
+		std::string res = SERVER_PREFIX + ReplyCodeToString(ERR_PASSWDMISMATCH) + " :Password mismatch.";
+		SendToClient(*c, res);
 	}
 }
 

@@ -7,6 +7,10 @@
 
 namespace Command
 {
+    struct Pass
+    {
+        std::string password;
+    };
 
     struct User
     {
@@ -69,13 +73,13 @@ namespace Command
         std::string nickname;
         std::string channel;
     };
-
 }
 
 enum Type
 {
     ERROR,
     CAP,
+    PASS,
     NICK,
     USER,
     PRIVMSG,
@@ -85,7 +89,6 @@ enum Type
     TOPIC,
     MODE,
     WHO,
-    PASS,
     QUIT
 };
 
@@ -96,6 +99,7 @@ public:
     std::vector<std::string> Split(std::string lines, std::string split);
 
     Type ProcessLine(std::string message);
+    Command::Pass pass;
     Command::User user;
     Command::Nick nick;
     Command::Kick kick;
