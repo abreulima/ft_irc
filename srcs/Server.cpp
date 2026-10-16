@@ -194,19 +194,19 @@ void Server::HandleJoin(Client *c, Command::Join data)
 {
 	if (data.channel.empty() || data.channel.at(0) != '#')
 		return;
-	
-	// Search for the channel
+			
 	std::map<std::string, Channel>::iterator it;
 	it = channels.find(data.channel);
 
 	bool isNew = (it == channels.end());
 
-	if (isNew)
-	{
-		channels[data.channel] = Channel();
-	}
+	if (isNew) channels[data.channel] = Channel();
 
 	Channel &channel = channels[data.channel];
+
+	// is this ugly? !not invite only or !not usepersmission
+	if (channel.modes.isInviteOnly && !c->useInvite(data.channel))
+		return ;
 
 	Role role;
 	role.isOperator = isNew ? true : false;
@@ -242,7 +242,7 @@ void Server::HandleTopic(Client *c, Command::Topic data)
 
 	if (channels.find(data.channel) == channels.end())
 	{
-		SendCode(*c, ERR_NOSUCHCHANNEL, data.channel, "No such channel");
+		SendCode(*c, ERR_NOSUCHCHANNEL, data.channel, "No such channel");	
 		return;
 	}
 
