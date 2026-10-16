@@ -101,3 +101,10 @@ struct Mode
 ```
 
 Aceder ``args['k']`` devolve a a senha fornecida pelo usuário.
+
+
+## Resources
+
+- [Internet Relay Chat Protocol Documentation](dd.ircdocs.horse)
+- [Modern IRC Client Protocol](modern.ircdocs.horse)
+- [IRCv3](ircv3.net)
