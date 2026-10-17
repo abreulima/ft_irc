@@ -57,7 +57,7 @@ public:
 	void RemovePassword();
 
 	void SetLimit(int limit);
-	void SetLimit(const std::string& limit);
+	// void SetLimit(const std::string& limit);
 
 
 };

@@ -150,11 +150,11 @@ void Channel::SetLimit(int limit)
         modes.limit = limit;
 }
 
-void Channel::SetLimit(const std::string &limit)
+/* void Channel::SetLimit(const std::string &limit)
 {
 
     if (limit.empty())
         return;
 
     SetLimit(std::atoi(limit.c_str()));
-}
+} */

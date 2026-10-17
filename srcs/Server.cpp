@@ -458,9 +458,16 @@ void Server::HandleMode(Client *c, Command::Mode data)
 		}
 		else if (data.modes.at(i) == 'l')
 		{
-			data.isAdding
-				? channel->SetLimit(data.args.at('l'))
-				: channel->SetLimit(0);
+			if (data.isAdding) {
+				int limit = std::atoi(data.args.at('l').c_str());
+				
+				if (limit > 0)
+					channel->SetLimit(limit);
+				else
+					return;
+			} else {
+				channel->SetLimit(0);
+			}
 		}
 		else if (data.modes.at(i) == 'k')
 		{
@@ -473,15 +480,10 @@ void Server::HandleMode(Client *c, Command::Mode data)
 	// Send it back to everyone
 	std::string res = std::string(SERVER_PREFIX) + "MODE " + data.channel + " ";
 	res += data.modes;
-	std::map<char, std::string>::iterator it;
-	it = data.args.begin();
-	while (it != data.args.end())
-	{
-		res += " ";
-		res += it->second;
-		it++;
-	}
-	// std::cout << res << std::endl;
+
+	for (std::map<char, std::string>::iterator it = data.args.begin(); it != data.args.end(); it++)
+		res += " " + it->second;
+
 	SendToChannel(*channel, res, NULL);
 }
 
