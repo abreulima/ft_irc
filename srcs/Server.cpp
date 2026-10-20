@@ -42,7 +42,10 @@ void Server::Display()
 bool Server::Init()
 {
 	serverFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	// TODO: Check socket return for errors
+	if (serverFD == -1) {
+		perror("Can't create the socket.");
+		return false;
+	}
 
 	int opt = 1;
 	setsockopt(serverFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
