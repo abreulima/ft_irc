@@ -36,6 +36,7 @@ private:
 	void handleCommands(size_t fd_id, std::vector<std::string>& messages);
 	void HandleCAP(Client *c, std::string line);
 	void HandlePass(Client *c, Command::Pass data);
+	void HandleUser(Client *c, Command::User data);
 	void HandleInvite(Client *c, Command::Invite data);
 	void HandleJoin(Client *c, Command::Join data);
 	void HandlePart(Client *c, Command::Part data);

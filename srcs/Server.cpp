@@ -33,8 +33,8 @@ Server::Server(std::string port, std::string password): port(parsePort(port)), p
 
 void Server::Display()
 {
-	std::cout << "Server running at port " << port << "\n";
-	std::cout << "Preferred client is HexChat." << "\n";
+	std::cout << "Server running at port " << port << std::endl;
+	std::cout << "Preferred client is HexChat." << std::endl;
 	return;
 }
 
@@ -150,7 +150,7 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 			case CAP:		HandleCAP(&c, message);					break;
 			case PASS:		HandlePass(&c, parser.pass);			break;
 			case NICK:		HandleNick(&c, parser.nick);			break;
-			case USER:		c.SetUsername(parser.user.username);	break;
+			case USER:		HandleUser(&c, parser.user);			break;
 			case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
 			case INVITE:	HandleInvite(&c, parser.invite);		break;
 			case JOIN:		HandleJoin(&c, parser.join);			break;
@@ -161,12 +161,9 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 			case MODE:		HandleMode(&c, parser.mode);			break;
 			case QUIT:		HandleQuit(&c, parser.quit);			break;
 			
-			case ERROR:
-				break;
+			case ERROR:												break;
 			
-			default:
-				std::cout << "UNKNOWN\n";				
-				break;
+			default:		std::cout << "UNKNOWN" << std::endl;	break;
 		}
 	}
 }
@@ -224,6 +221,11 @@ void Server::HandleNick(Client *c, Command::Nick data)
 	TryRegister(c);
 }
 
+void Server::HandleUser(Client *c, Command::User data)
+{
+	c->SetUsername(data.username);
+}
+
 // TODO: Missing Error Handling
 void Server::HandleJoin(Client *c, Command::Join data)
 {
@@ -279,7 +281,7 @@ void Server::HandlePart(Client *c, Command::Part data)
 	Channel *channel = GetChannelByName(data.channel);
 	if (!channel)
 	{
-		SendCode(*c, ERR_NOSUCHCHANNEL, data.channel, "No such channel");	
+		SendCode(*c, ERR_NOSUCHCHANNEL, c->GetNickname(), data.channel, "No such channel");	
 		return;
 	}
 
@@ -291,6 +293,8 @@ void Server::HandlePart(Client *c, Command::Part data)
 	}
 
 	channel->Remove(parted);
+	if (channel->CountMembers() == 0)
+		channels.erase(channels.find(data.channel));
 	
 	std::string res = c->GetPrefix() + " PART " + data.channel + " :" + data.reason;
 	SendToChannel(*channel, res, NULL);
@@ -315,7 +319,7 @@ void Server::HandleTopic(Client *c, Command::Topic data)
 	}
 	else
 	{
-		std::cerr << "is not operator\n";
+		std::cerr << "is not operator" << std::endl;
 	}
 }
 
