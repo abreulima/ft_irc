@@ -1,6 +1,5 @@
 #include "Server.hpp"
 #include "Parser.hpp"
-#include "Replies.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -155,6 +154,7 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 			case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
 			case INVITE:	HandleInvite(&c, parser.invite);		break;
 			case JOIN:		HandleJoin(&c, parser.join);			break;
+			case PART:		HandlePart(&c, parser.part);			break;
 			case KICK:		HandleKick(&c, parser.kick);			break;
 			case TOPIC:		HandleTopic(&c, parser.topic);			break;
 			case WHO:		HandleWho(&c, parser.who);				break;
@@ -274,6 +274,28 @@ void Server::HandleJoin(Client *c, Command::Join data)
 	}
 }
 
+void Server::HandlePart(Client *c, Command::Part data)
+{
+	Channel *channel = GetChannelByName(data.channel);
+	if (!channel)
+	{
+		SendCode(*c, ERR_NOSUCHCHANNEL, data.channel, "No such channel");	
+		return;
+	}
+
+	Client *parted = channel->GetUserByNickname(c->GetNickname());
+	if (!parted)
+	{
+		SendCode(*c, ERR_NOTONCHANNEL, c->GetNickname(), data.channel, "User not on Channel.");
+		return;
+	}
+
+	channel->Remove(parted);
+	
+	std::string res = c->GetPrefix() + " PART " + data.channel + " :" + data.reason;
+	SendToChannel(*channel, res, NULL);
+}
+
 void Server::HandleTopic(Client *c, Command::Topic data)
 {
 
@@ -304,14 +326,14 @@ void Server::HandleKick(Client *c, Command::Kick data)
 	Role role = channel.clients.at(c);
 	if (!role.isOperator)
 	{
-		SendCode(*c, ERR_CHANOPRIVSNEEDED, data.channel, "403 Forbidden - Not an Operator");
+		SendCode(*c, ERR_CHANOPRIVSNEEDED, data.channel, "Not an Operator.");
 		return;
 	}
 
 	Client *kicked = channel.GetUserByNickname(data.nickname);
 	if (!kicked)
 	{
-		SendCode(*c, ERR_NOSUCHNICK, data.nickname, "404 User Not Found");
+		SendCode(*c, ERR_NOSUCHNICK, data.nickname, "User not found.");
 		return;
 	}
 
@@ -536,6 +558,29 @@ void Server::SendCode(Client c, int codeNum, std::string target, std::string mes
 
 	if (!target.empty())
 		res += " " + target;
+
+	res += " :" + message;
+
+	SendToClient(c, message);
+}
+
+void Server::SendCode(Client c, int codeNum, std::string target1, std::string target2, std::string message)
+{
+	std::stringstream ss;
+	ss << std::setw(3) << std::setfill('0') << codeNum;
+
+	std::string nick = c.GetNickname();
+	if (nick.empty())
+		nick = "*";
+
+	std::string res = std::string(SERVER_PREFIX) + ss.str() + " ";
+	res += nick;
+
+	if (!target1.empty())
+		res += " " + target1;
+	
+	if (!target2.empty())
+		res += " " + target2;
 
 	res += " :" + message;
 

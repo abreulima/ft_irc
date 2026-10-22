@@ -63,5 +63,6 @@ enum ReplyCode
 };
 
 std::string ReplyCodeToString(ReplyCode code);
+// std::string ReplyMessage(ReplyCode code);
 
 #endif // REPLIES_HPP

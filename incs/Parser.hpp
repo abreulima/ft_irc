@@ -27,6 +27,12 @@ namespace Command
         std::string channel;
         std::string password;
     };
+    
+	struct Part
+	{
+		std::string channel;
+		std::string reason;
+	};
 
     struct Kick
     {
@@ -86,6 +92,7 @@ enum Type
     PRIVMSG,
     INVITE,
     JOIN,
+    PART,
     KICK,
     TOPIC,
     MODE,
@@ -103,10 +110,11 @@ public:
     Command::Pass pass;
     Command::User user;
     Command::Nick nick;
-    Command::Kick kick;
+    Command::Join join;
+    Command::Part part;
     Command::Topic topic;
     Command::Invite invite;
-    Command::Join join;
+    Command::Kick kick;
     Command::Quit quit;
     Command::Priv priv;
     Command::Who who;

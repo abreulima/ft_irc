@@ -52,6 +52,14 @@ Type Parser::ProcessLine(std::string message)
 		kick.reason = message.substr(message.find(":") + 1);
 		return KICK;
 	}
+	else if (messages.at(0).compare("PART") == 0)
+	{
+		if (messages.size() >= 2)
+			part.channel = messages.at(1);
+		if (messages.size() >= 3)
+			part.reason = messages.at(2);
+		return PART;
+	}
 	else if (messages.at(0).compare("JOIN") == 0)
 	{
 		if (messages.size() > 1)

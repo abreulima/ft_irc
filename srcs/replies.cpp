@@ -1,5 +1,5 @@
 
-#include "Replies.hpp"
+#include "replies.hpp"
 
 std::string ReplyCodeToString(ReplyCode code)
 {
@@ -8,7 +8,7 @@ std::string ReplyCodeToString(ReplyCode code)
 	return replyCode.str();
 }
 
-/* static std::string ReplyMessage(ReplyCode code)
+/* std::string ReplyMessage(ReplyCode code)
 {
 	switch (code)
 	{

@@ -1,7 +1,7 @@
 #include "Client.hpp"
 #include <iostream>
 
-Client::Client() : _isRegistered(false), _isCapEnded(false)
+Client::Client() : _isAuthenticated(false), _isRegistered(false), _isCapEnded(false)
 {
 }
 

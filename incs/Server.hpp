@@ -4,7 +4,7 @@
 # include "Channel.hpp"
 # include "Client.hpp"
 # include "Parser.hpp"
-# include "Replies.hpp"
+# include "replies.hpp"
 
 # include <map>
 # include <vector>
@@ -38,6 +38,7 @@ private:
 	void HandlePass(Client *c, Command::Pass data);
 	void HandleInvite(Client *c, Command::Invite data);
 	void HandleJoin(Client *c, Command::Join data);
+	void HandlePart(Client *c, Command::Part data);
 	void HandleKick(Client *c, Command::Kick data);
 	void HandleTopic(Client *c, Command::Topic data);
 	void HandleNick(Client *c, Command::Nick data);
@@ -50,7 +51,8 @@ private:
 	void SendToClient(Client c, std::string message);
 	void SendToChannel(Channel c, std::string message, Client *exclude);
 	void SendToChannels(std::vector<Channel *> channels, std::string message, Client *exclude);
-	void SendCode(Client c, int codeNum, std::string channel, std::string message);
+	void SendCode(Client c, int codeNum, std::string target, std::string message);
+	void SendCode(Client c, int codeNum, std::string target1, std::string target2, std::string message);
 
 	// Channel Manager
 	std::vector<Channel*> GetChannelsByClient(Client *c);
