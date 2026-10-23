@@ -1,8 +1,8 @@
 #ifndef CLIENT_HPP
-#define CLIENT_HPP
+# define CLIENT_HPP
 
-#include <string>
-#include <set>
+# include <string>
+# include <set>
 
 class Client
 {
@@ -45,4 +45,4 @@ public:
 
 };
 
-#endif
+#endif // CLIENT_HPP

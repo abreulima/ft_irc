@@ -544,7 +544,7 @@ void Server::HandleQuit(Client *c, Command::Quit data)
 void Server::SendToClient(Client c, std::string message)
 {
 	std::cerr << GREEN << "Server says: " << message << RESET << std::endl;
-	message += "\r\n";
+	message += CRLF;
 	send(c.GetFD(), message.c_str(), message.size(), 0);
 }
 

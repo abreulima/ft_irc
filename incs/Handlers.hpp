@@ -1,9 +1,9 @@
-#ifndef HANDLERS_CPP
-#define HANDLERS_CPP
+#ifndef HANDLERS_HPP
+# define HANDLERS_HPP
 
 class Handlers
 {
     
 };
 
-#endif
+#endif // HANDLERS_HPP

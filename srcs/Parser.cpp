@@ -186,7 +186,7 @@ std::vector<std::string> Parser::Split(std::string lines)
 	size_t start;
 	size_t pos;
 
-	std::string split = "\r\n";
+	std::string split = CRLF;
 	std::vector<std::string> res;
 	start = 0;
 	while ((pos = lines.find(split, start)) != std::string::npos)

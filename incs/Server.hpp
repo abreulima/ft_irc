@@ -71,4 +71,4 @@ public:
 	void Display();
 };
 
-#endif
+#endif // SERVER_HPP

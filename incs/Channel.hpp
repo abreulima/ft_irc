@@ -1,9 +1,9 @@
 #ifndef CHANNEL_HPP
-#define CHANNEL_HPP
+# define CHANNEL_HPP
 
-#include "Client.hpp"
-#include <map>
-#include <string>
+# include "Client.hpp"
+# include <map>
+# include <string>
 
 struct Modes
 {
@@ -62,4 +62,4 @@ public:
 
 };
 
-#endif
+#endif // CHANNEL_HPP

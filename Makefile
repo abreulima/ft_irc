@@ -1,9 +1,9 @@
 NAME		:= ircserv
 
 CXX			:= c++
-CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -MMD -MP -g3
+CXXFLAGS	:= -Wall -Wextra -Werror -g3 -std=c++98 -MMD -MP
 INC			:= -Iincs
-MAKEFLAGS	+= -s
+# MAKEFLAGS	+= -s
 
 SRCS_DIR	:= srcs
 OBJS_DIR	:= objs

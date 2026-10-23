@@ -1,9 +1,10 @@
 #ifndef PARSER_HPP
-#define PARSER_HPP
+# define PARSER_HPP
 
-#include <string>
-#include <vector>
-#include <map>
+# include "replies.hpp"
+# include <string>
+# include <vector>
+# include <map>
 
 namespace Command
 {
@@ -121,4 +122,4 @@ public:
     Command::Mode mode;
 };
 
-#endif
+#endif // PARSER_HPP
