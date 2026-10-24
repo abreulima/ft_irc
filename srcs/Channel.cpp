@@ -18,9 +18,7 @@ Channel::Channel(const Channel &copy) : _name(copy._name), modes(copy.modes), to
         return;
 }
 
-Channel::~Channel()
-{
-}
+Channel::~Channel() {}
 
 const Channel &Channel::operator=(const Channel &copy)
 {

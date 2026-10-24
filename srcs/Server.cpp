@@ -330,7 +330,13 @@ void Server::HandleKick(Client *c, Command::Kick data)
 	Channel *channel = GetChannelByName(data.channel);
 	if (!channel)
 	{
-		SendCode(*c, ERR_NOSUCHCHANNEL, c->GetNickname(), data.channel, "No such channel");	
+		SendCode(*c, ERR_NOSUCHCHANNEL, data.nickname, data.channel, "No such channel");	
+		return;
+	}
+
+	if (!channel->IsMember(c))
+	{
+		SendCode(*c, ERR_NOTONCHANNEL, data.nickname, "You're not on that channel.");
 		return;
 	}
 
@@ -342,9 +348,9 @@ void Server::HandleKick(Client *c, Command::Kick data)
 	}
 
 	Client *kicked = channel->GetUserByNickname(data.nickname);
-	if (!kicked)
+	if (!channel->IsMember(kicked))
 	{
-		SendCode(*c, ERR_NOSUCHNICK, data.nickname, "User not found.");
+		SendCode(*c, ERR_USERNOTINCHANNEL, data.nickname, data.channel, "User not in channel.");
 		return;
 	}
 

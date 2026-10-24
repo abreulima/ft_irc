@@ -62,8 +62,6 @@ public:
 
 	void SetLimit(int limit);
 	// void SetLimit(const std::string& limit);
-
-
 };
 
 #endif // CHANNEL_HPP
