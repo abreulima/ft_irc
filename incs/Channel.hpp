@@ -32,17 +32,19 @@ public:
 	std::map<Client *, Role> clients;
 
 	// OCF
-	Channel();
+	Channel(std::string name);
 	Channel(const Channel &copy);
 	~Channel();
 	const Channel &operator=(const Channel &copy);
 
 	// getters
+	const std::string &getName() const;
 	const std::string &getTopic() const;
 	Client *GetUserByNickname(std::string nickname);
 	std::string GetModesString();
 
 	// setters
+	void setName(const std::string &ref);
 	void setTopic(const std::string &ref);
 
 	// methods

@@ -33,7 +33,7 @@ Server::Server(std::string port, std::string password): port(parsePort(port)), p
 
 void Server::Display()
 {
-	std::cout << "Server running at port " << port << std::endl;
+	std::cout << "Server running at port " << port << " with password " << password << std::endl;
 	std::cout << "Preferred client is HexChat." << std::endl;
 	return;
 }
@@ -108,6 +108,8 @@ void Server::Run()
 				int numBytes = recv(fds.at(i).fd, incoming, 512, 0);
 
 				// TODO: Not sure but I think we should handle == 0 apart from errors.
+				// If client disconnects, it should remove that client of all channels
+				// and if the channel is empty after that it should be removed as well.
 				if (numBytes <= 0)
 				{
 					int fd = fds.at(i).fd;
@@ -187,6 +189,7 @@ void Server::HandlePass(Client *c, Command::Pass data)
 {
 	if (c->IsAuthenticated()) {
 		SendToClient(*c, std::string(SERVER_PREFIX) + ReplyCodeToString(ERR_ALREADYREGISTERED) + " :Already Registered.");
+		return;
 	}
 	if (data.password.compare(password) == 0) {
 		c->SetAuthenticated(true);
@@ -231,31 +234,31 @@ void Server::HandleJoin(Client *c, Command::Join data)
 {
 	if (data.channel.empty() || data.channel.at(0) != '#')
 		return;
-			
-	ChannelIterator it = channels.find(data.channel);
 
-	bool isNew = (it == channels.end());
+	bool isNew = (channels.find(data.channel) == channels.end());
 
-	if (isNew) channels[data.channel] = Channel();
+	if (isNew) {
+		channels.insert(make_pair(data.channel, Channel(data.channel)));
+	}
 
-	Channel &channel = channels[data.channel];
-
+	Channel *channel = GetChannelByName(data.channel);
+	
 	// TODO: needs error handling
-	if (channel.modes.isInviteOnly && !c->useInvite(data.channel))
+	if (channel->modes.isInviteOnly && !c->useInvite(data.channel))
 		return ;
-	if (!channel.modes.password.empty() && data.password != channel.modes.password)
+	if (!channel->modes.password.empty() && data.password != channel->modes.password)
 		return ;
 
 	Role role;
 	role.isOperator = isNew ? true : false;
-	channel.Add(c, role);
+	channel->Add(c, role);
 
 	std::string res = c->GetPrefix() + " JOIN " + data.channel;
-	SendToChannel(channel, res, NULL);
+	SendToChannel(*channel, res, NULL);
 
 	std::string nickList;
 
-	for (ClientRoleIterator it(channel.clients.begin()); it != channel.clients.end(); it++)
+	for (ClientRoleIterator it(channel->clients.begin()); it != channel->clients.end(); it++)
 	{
 		Client *member = it->first;
 		Role role = it->second;
@@ -265,16 +268,17 @@ void Server::HandleJoin(Client *c, Command::Join data)
 		nickList += " ";
 	}
 
-	SendToChannel(channel, std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_NAMREPLY) + " " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
-	SendToChannel(channel, std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_ENDOFNAMES) + " " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
+	SendToChannel(*channel, std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_NAMREPLY) + " " + c->GetNickname() + " = " + data.channel + " :" + nickList, 0);
+	SendToChannel(*channel, std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_ENDOFNAMES) + " " + c->GetNickname() + " " + data.channel + " :End of /NAMES list", 0);
 
-	if (channel.getTopic().size() > 0)
+	if (channel->getTopic().size() > 0)
 	{
-		std::string topic = std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + channels[data.channel].getTopic();
+		std::string topic = std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + channel->getTopic();
 		SendToClient(*c, topic);
 	}
 }
 
+// TODO: Handle multiple channels, loop trought add channels passed between commas
 void Server::HandlePart(Client *c, Command::Part data)
 {
 	Channel *channel = GetChannelByName(data.channel);
@@ -292,13 +296,13 @@ void Server::HandlePart(Client *c, Command::Part data)
 	}
 
 	channel->Remove(parted);
-	if (channel->CountMembers() == 0)
-		channels.erase(channels.find(data.channel));
+	DeleteEmptyChannel(*channel);
 	
 	std::string res = c->GetPrefix() + " PART " + data.channel + " :" + data.reason;
 	SendToChannel(*channel, res, NULL);
 }
 
+// TODO: Error Handling
 void Server::HandleTopic(Client *c, Command::Topic data)
 {
 
@@ -345,6 +349,7 @@ void Server::HandleKick(Client *c, Command::Kick data)
 	}
 
 	channel->Remove(kicked);
+	DeleteEmptyChannel(*channel);
 	
 	data.reason = data.reason.empty() ? c->GetNickname() : data.reason;
 	std::string res = c->GetPrefix() + " KICK " + data.channel + " " + data.nickname + " :" + data.reason;
@@ -526,15 +531,13 @@ void Server::HandleMode(Client *c, Command::Mode data)
 void Server::HandleQuit(Client *c, Command::Quit data)
 {
 	std::string res = c->GetPrefix() + " QUIT :" + data.reason;
-	// Send message to everyone the member is leaving
 	std::vector<Channel> channelsByMember = GetChannelsByClient(c);
-	for (size_t i = 0; i < channelsByMember.size(); i++)
+	for (std::vector<Channel>::iterator it = channelsByMember.begin(); it != channelsByMember.end(); it++)
 	{
-		Channel channel = channelsByMember.at(i);
-		channel.Remove(c);
-		SendToChannel(channel, res, c);
+		it->Remove(c);
+		SendToChannel(*it, res, c);
+		DeleteEmptyChannel(*it);
 	}
-	DeleteEmptyChannels();
 }
 
 void Server::SendToClient(Client c, std::string message)
@@ -624,10 +627,10 @@ std::vector<Channel> Server::GetChannelsByClient(Client *c)
 
 Channel *Server::GetChannelByName(const std::string &name)
 {
-	ChannelIterator it = channels.find(name);
+	ChannelIterator found = channels.find(name);
 
-	if (it != channels.end())
-		return &it->second;
+	if (found != channels.end())
+		return &found->second;
 	else
 		return NULL;
 }
@@ -682,12 +685,18 @@ void Server::TryRegister(Client *c)
 	SendCode(*c, RPL_WELCOME, "", "Hello dear evaluator!");
 }
 
+// Removes the channel from the map if it's empty
+void Server::DeleteEmptyChannel(Channel& channel)
+{
+	if (channel.CountMembers() == 0)
+		channels.erase(channel.getName());
+}
+
+// Removes empty channels from the map
 void Server::DeleteEmptyChannels()
 {
-	// If the channel is empty it should be removed
 	for (ChannelIterator it = channels.begin(); it != channels.end(); it++)
 	{
-		if (it->second.CountMembers() == 0)
-			channels.erase(it);
+		DeleteEmptyChannel(it->second);
 	}
 }

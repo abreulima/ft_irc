@@ -67,6 +67,7 @@ private:
 	bool IsNicknameInUse(std::string nickname, Client* exclude);
 	void TryRegister(Client *c);
 
+	void DeleteEmptyChannel(Channel& channel);
 	void DeleteEmptyChannels();
 public:
 	Server(std::string port, std::string password);

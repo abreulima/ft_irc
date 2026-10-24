@@ -3,7 +3,7 @@
 #include <cstdlib>
 
 // OCF
-Channel::Channel()
+Channel::Channel(std::string name): _name(name)
 {
     modes.isMemberOnly = true;
     modes.isInviteOnly = false;
@@ -34,6 +34,11 @@ const Channel &Channel::operator=(const Channel &copy)
 }
 
 // getters
+const std::string &Channel::getName() const
+{
+    return _name;
+}
+
 const std::string &Channel::getTopic() const
 {
     return topic;
@@ -75,6 +80,11 @@ std::string Channel::GetModesString()
 }
 
 // setters
+void Channel::setName(const std::string &ref)
+{
+    _name = ref;
+}
+
 void Channel::setTopic(const std::string &ref)
 {
     topic = ref;
