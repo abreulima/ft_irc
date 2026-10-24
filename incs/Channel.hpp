@@ -19,6 +19,8 @@ struct Role
 	bool isOperator;
 };
 
+typedef std::map<Client *, Role>::iterator	ClientRoleIterator;
+
 class Channel
 {
 private:

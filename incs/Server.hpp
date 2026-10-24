@@ -21,6 +21,9 @@
 # define YELLOW			"\033[33m"
 # define BLUE			"\033[34m"
 
+typedef std::map<std::string, Channel>::iterator	ChannelIterator;
+typedef std::map<int, Client>::iterator				ClientIterator;
+	
 class Server
 {
 private:
@@ -51,12 +54,12 @@ private:
 	// Senders
 	void SendToClient(Client c, std::string message);
 	void SendToChannel(Channel c, std::string message, Client *exclude);
-	void SendToChannels(std::vector<Channel *> channels, std::string message, Client *exclude);
+	void SendToChannels(std::vector<Channel> channels, std::string message, Client *exclude);
 	void SendCode(Client c, int codeNum, std::string target, std::string message);
 	void SendCode(Client c, int codeNum, std::string target1, std::string target2, std::string message);
 
 	// Channel Manager
-	std::vector<Channel*> GetChannelsByClient(Client *c);
+	std::vector<Channel> GetChannelsByClient(Client *c);
 	Channel* GetChannelByName(const std::string& name);
 
 	// Clients Manager
@@ -64,6 +67,7 @@ private:
 	bool IsNicknameInUse(std::string nickname, Client* exclude);
 	void TryRegister(Client *c);
 
+	void DeleteEmptyChannels();
 public:
 	Server(std::string port, std::string password);
 	void Run();

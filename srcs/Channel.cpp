@@ -41,8 +41,7 @@ const std::string &Channel::getTopic() const
 
 Client *Channel::GetUserByNickname(std::string nickname)
 {
-    std::map<Client *, Role>::iterator it;
-    it = clients.begin();
+	ClientRoleIterator it = clients.begin();
 
     while (it != clients.end())
     {

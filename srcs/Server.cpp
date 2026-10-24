@@ -232,8 +232,7 @@ void Server::HandleJoin(Client *c, Command::Join data)
 	if (data.channel.empty() || data.channel.at(0) != '#')
 		return;
 			
-	std::map<std::string, Channel>::iterator it;
-	it = channels.find(data.channel);
+	ChannelIterator it = channels.find(data.channel);
 
 	bool isNew = (it == channels.end());
 
@@ -256,7 +255,7 @@ void Server::HandleJoin(Client *c, Command::Join data)
 
 	std::string nickList;
 
-	for (std::map<Client *, Role>::iterator it(channel.clients.begin()); it != channel.clients.end(); it++)
+	for (ClientRoleIterator it(channel.clients.begin()); it != channel.clients.end(); it++)
 	{
 		Client *member = it->first;
 		Role role = it->second;
@@ -303,19 +302,18 @@ void Server::HandlePart(Client *c, Command::Part data)
 void Server::HandleTopic(Client *c, Command::Topic data)
 {
 
-	if (channels.find(data.channel) == channels.end())
+	Channel *channel = GetChannelByName(data.channel);
+	if (!channel)
 	{
-		SendCode(*c, ERR_NOSUCHCHANNEL, data.channel, "No such channel");	
+		SendCode(*c, ERR_NOSUCHCHANNEL, c->GetNickname(), data.channel, "No such channel");	
 		return;
 	}
 
-	if (channels.at(data.channel).clients.at(c).isOperator ||
-		channels.at(data.channel).modes.isTopicOpOnly == false)
+	if (channel->clients.at(c).isOperator || channel->modes.isTopicOpOnly == false)
 	{
-		std::string res;
-		res = std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + data.topic;
-		SendToChannel(channels[data.channel], res, NULL);
-		channels.at(data.channel).setTopic(data.topic);
+		std::string res = std::string(SERVER_PREFIX) + ReplyCodeToString(RPL_TOPIC) + " " + c->GetNickname() + " " + data.channel + " :" + data.topic;
+		SendToChannel(*channel, res, NULL);
+		channel->setTopic(data.topic);
 	}
 	else
 	{
@@ -325,40 +323,45 @@ void Server::HandleTopic(Client *c, Command::Topic data)
 
 void Server::HandleKick(Client *c, Command::Kick data)
 {
-	Channel &channel = channels[data.channel];
+	Channel *channel = GetChannelByName(data.channel);
+	if (!channel)
+	{
+		SendCode(*c, ERR_NOSUCHCHANNEL, c->GetNickname(), data.channel, "No such channel");	
+		return;
+	}
 
-	Role role = channel.clients.at(c);
+	Role role = channel->clients.at(c);
 	if (!role.isOperator)
 	{
 		SendCode(*c, ERR_CHANOPRIVSNEEDED, data.channel, "Not an Operator.");
 		return;
 	}
 
-	Client *kicked = channel.GetUserByNickname(data.nickname);
+	Client *kicked = channel->GetUserByNickname(data.nickname);
 	if (!kicked)
 	{
 		SendCode(*c, ERR_NOSUCHNICK, data.nickname, "User not found.");
 		return;
 	}
 
-	channel.Remove(kicked);
+	channel->Remove(kicked);
 	
 	data.reason = data.reason.empty() ? c->GetNickname() : data.reason;
 	std::string res = c->GetPrefix() + " KICK " + data.channel + " " + data.nickname + " :" + data.reason;
-	SendToChannel(channel, res, NULL);
+	SendToChannel(*channel, res, NULL);
 }
 
 void Server::HandleInvite(Client *c, Command::Invite data)
 {
-
-	// No channel
-	if (channels.find(data.channel) == channels.end())
+	Channel *channel = GetChannelByName(data.channel);
+	if (!channel)
+	{
+		SendCode(*c, ERR_NOSUCHCHANNEL, c->GetNickname(), data.channel, "No such channel");	
 		return;
-
-	Channel &channel = channels[data.channel];
+	}
  
 	// Channel is Invite Only and Sender isn't operator.
-	if (channel.modes.isInviteOnly && !channel.IsOperator(c))
+	if (channel->modes.isInviteOnly && !channel->IsOperator(c))
 	{
 		SendCode(*c, ERR_CHANOPRIVSNEEDED, data.channel, "You aren't allowed.");
 		return ;
@@ -390,15 +393,13 @@ void Server::HandlePrivMsg(Client *c, Command::Priv data)
 
 	if (data.target.at(0) == '#')
 	{
-		std::map<std::string, Channel>::iterator it;
-		it = channels.find(data.target);
-
-		if (it == channels.end())
+		Channel *channel = GetChannelByName(data.target);
+		if (!channel)
 		{
-			// TODO ERR_NOCHANNEL
+			SendCode(*c, ERR_NOSUCHCHANNEL, c->GetNickname(), data.target, "No such channel");	
 			return;
 		}
-		SendToChannel(channels[data.target], res, c);
+		SendToChannel(*channel, res, c);
 	}
 	else
 	{
@@ -413,15 +414,19 @@ void Server::HandlePrivMsg(Client *c, Command::Priv data)
 // per user
 // :irc.server 352 Alice #Hello alice host1 irc.server Alice H@ :0 Alice
 // :<server> 352 <requester> <channel> <user> <host> <server> <nick> <flags> :<hopcount> <realname>
-// TODO OR NOT TODO: WHO handles nickname instead of channel as well.
+// TODO OR NOT TODO: WHO handles nicknames as well as channels.
 void Server::HandleWho(Client *c, Command::Who data)
 {
+	Channel *channel = GetChannelByName(data.channel);
+	if (!channel)
+	{
+		SendCode(*c, ERR_NOSUCHCHANNEL, c->GetNickname(), data.channel, "No such channel");	
+		return;
+	}
 
-	Channel &channel = channels[data.channel];
-	std::map<Client *, Role>::iterator it;
-	it = channel.clients.begin();
+	ClientRoleIterator it = channel->clients.begin();
 
-	while (it != channel.clients.end())
+	while (it != channel->clients.end())
 	{
 		Client *member = it->first;
 		Role role = it->second;
@@ -447,9 +452,11 @@ void Server::HandleWho(Client *c, Command::Who data)
 void Server::HandleMode(Client *c, Command::Mode data)
 {
 	Channel *channel = GetChannelByName(data.channel);
-
 	if (!channel)
+	{
+		SendCode(*c, ERR_NOSUCHCHANNEL, c->GetNickname(), data.channel, "No such channel");	
 		return;
+	}
 
 	if (!data.isOperation)
 	{
@@ -518,27 +525,16 @@ void Server::HandleMode(Client *c, Command::Mode data)
 
 void Server::HandleQuit(Client *c, Command::Quit data)
 {
-	(void)data;
-
-	std::string res = c->GetPrefix() + " QUIT :Bye";
+	std::string res = c->GetPrefix() + " QUIT :" + data.reason;
 	// Send message to everyone the member is leaving
-	// SendToChannels(GetChannelsByClient(c), res, c); // Can't implement this one alone because of remove function is not implemented in the send function.
-	std::vector<Channel *> channelsByMember = GetChannelsByClient(c);
+	std::vector<Channel> channelsByMember = GetChannelsByClient(c);
 	for (size_t i = 0; i < channelsByMember.size(); i++)
 	{
-		channelsByMember.at(i)->Remove(c);
-		SendToChannel(*channelsByMember.at(i), res, c);
+		Channel channel = channelsByMember.at(i);
+		channel.Remove(c);
+		SendToChannel(channel, res, c);
 	}
-	// If the channel is empty it should be removed
-	std::map<std::string, Channel>::iterator it;
-	it = channels.begin();
-	while (it != channels.end())
-	{
-		if (it->second.CountMembers() == 0)
-			channels.erase(it++);
-		else
-			++it;
-	}
+	DeleteEmptyChannels();
 }
 
 void Server::SendToClient(Client c, std::string message)
@@ -593,8 +589,7 @@ void Server::SendCode(Client c, int codeNum, std::string target1, std::string ta
 
 void Server::SendToChannel(Channel c, std::string message, Client *exclude)
 {
-	std::map<Client *, Role>::iterator it;
-	for (it = c.clients.begin(); it != c.clients.end(); it++)
+	for (ClientRoleIterator it = c.clients.begin(); it != c.clients.end(); it++)
 	{
 		if (it->first == exclude)
 			continue;
@@ -602,27 +597,26 @@ void Server::SendToChannel(Channel c, std::string message, Client *exclude)
 	}
 }
 
-void Server::SendToChannels(std::vector<Channel *> channels, std::string message, Client *exclude)
+void Server::SendToChannels(std::vector<Channel> channels, std::string message, Client *exclude)
 {
 	for (size_t i = 0; i < channels.size(); i++)
 	{
-		SendToChannel(*channels.at(i), message, exclude);
+		SendToChannel(channels.at(i), message, exclude);
 	}
 }
 
 // Return all the channels' pointer the client is a member.
-std::vector<Channel *> Server::GetChannelsByClient(Client *c)
+std::vector<Channel> Server::GetChannelsByClient(Client *c)
 {
-	std::vector<Channel *> res;
+	std::vector<Channel> res;
 
-	std::map<std::string, Channel>::iterator it;
-	it = channels.begin();
+	ChannelIterator it = channels.begin();
 
 	while (it != channels.end())
 	{
 		Channel channel = it->second;
 		if (channel.IsMember(c))
-			res.push_back(&it->second);
+			res.push_back(channel);
 		it++;
 	}
 	return res;
@@ -630,8 +624,7 @@ std::vector<Channel *> Server::GetChannelsByClient(Client *c)
 
 Channel *Server::GetChannelByName(const std::string &name)
 {
-	std::map<std::string, Channel>::iterator it;
-	it = channels.find(name);
+	ChannelIterator it = channels.find(name);
 
 	if (it != channels.end())
 		return &it->second;
@@ -642,8 +635,7 @@ Channel *Server::GetChannelByName(const std::string &name)
 // TODO: unit test
 Client *Server::GetUserByNickname(std::string nickname)
 {
-	std::map<int, Client>::iterator it;
-	it = clients.begin();
+	ClientIterator it = clients.begin();
 	while (it != clients.end())
 	{
 		Client *member = &it->second;
@@ -656,8 +648,7 @@ Client *Server::GetUserByNickname(std::string nickname)
 
 bool Server::IsNicknameInUse(std::string nickname, Client* exclude)
 {
-	std::map<int, Client>::iterator it;
-	it = clients.begin();
+	ClientIterator it = clients.begin();
 
 	while (it != clients.end())
 	{
@@ -689,4 +680,14 @@ void Server::TryRegister(Client *c)
 	c->SetRegistered(true);
 
 	SendCode(*c, RPL_WELCOME, "", "Hello dear evaluator!");
+}
+
+void Server::DeleteEmptyChannels()
+{
+	// If the channel is empty it should be removed
+	for (ChannelIterator it = channels.begin(); it != channels.end(); it++)
+	{
+		if (it->second.CountMembers() == 0)
+			channels.erase(it);
+	}
 }

@@ -11,8 +11,6 @@ SRCS		:= $(addprefix $(SRCS_DIR)/, $(addsuffix .cpp, main Server Client Parser C
 OBJS		:= $(SRCS:$(SRCS_DIR)/%.cpp=$(OBJS_DIR)/%.o)
 DEPS		:= $(OBJS:.o=.d)
 
--include $(DEPS)
-
 all: $(NAME)
 
 $(NAME): $(OBJS)
@@ -34,3 +32,5 @@ go: all
 	./$(NAME) 6667 ""
 
 .PHONY: all clean fclean re g
+
+-include $(DEPS)
