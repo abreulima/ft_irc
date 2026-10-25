@@ -149,11 +149,11 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 
 		switch (cmd)
 		{
-			case CAP:		HandleCAP(&c, message);					break;
+			case CAP:		HandleCAP(&c, message);				break;
 			case PASS:		HandlePass(&c, parser.pass);			break;
 			case NICK:		HandleNick(&c, parser.nick);			break;
 			case USER:		HandleUser(&c, parser.user);			break;
-			case PRIVMSG:	HandlePrivMsg(&c, parser.priv);			break;
+			case PRIVMSG:	HandlePrivMsg(&c, parser.priv);		break;
 			case INVITE:	HandleInvite(&c, parser.invite);		break;
 			case JOIN:		HandleJoin(&c, parser.join);			break;
 			case PART:		HandlePart(&c, parser.part);			break;
@@ -162,10 +162,10 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 			case WHO:		HandleWho(&c, parser.who);				break;
 			case MODE:		HandleMode(&c, parser.mode);			break;
 			case QUIT:		HandleQuit(&c, parser.quit);			break;
-			
-			case ERROR:												break;
-			
-			default:		std::cout << "UNKNOWN" << std::endl;	break;
+
+			case ERROR:													break;
+
+			default:		std::cout << "UNKNOWN" << std::endl;			break;
 		}
 	}
 }
@@ -288,18 +288,17 @@ void Server::HandlePart(Client *c, Command::Part data)
 		return;
 	}
 
-	Client *parted = channel->GetUserByNickname(c->GetNickname());
-	if (!parted)
+	if (!channel->IsMember(c))
 	{
 		SendCode(*c, ERR_NOTONCHANNEL, c->GetNickname(), data.channel, "User not on Channel.");
 		return;
 	}
-
-	channel->Remove(parted);
-	DeleteEmptyChannel(*channel);
 	
 	std::string res = c->GetPrefix() + " PART " + data.channel + " :" + data.reason;
 	SendToChannel(*channel, res, NULL);
+
+	channel->Remove(c);
+	DeleteEmptyChannel(*channel);
 }
 
 // TODO: Error Handling
