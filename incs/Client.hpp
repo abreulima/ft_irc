@@ -7,42 +7,39 @@
 class Client
 {
 private:
-    int _fd;
-    std::string _username;
-    std::string _nickname;
-    std::string _hostname;
-    std::set<std::string> _invites;
-    bool _isAuthenticated;
-    bool _isRegistered;
-    bool _isCapEnded;
+	int						_fd;
+	std::string				_username;
+	std::string				_nickname;
+	std::string				_hostname;
+	std::string				_password;
+	std::set<std::string>	_invites;
+	bool					_isRegistered;
+	bool					_isCapEnded;
 
 public:
-    Client();
-    //Client(int fd) : _fd(fd) {};
-    //void SetFd(int fd);
-    int GetFD()const ; 
-    const std::string& GetUserName()const;
-    const std::string& GetNickname()const;
-    const std::string& GetHostName()const;
-    bool useInvite(const std::string& ref);
+	Client();
+	//Client(int fd) : _fd(fd) {};
+	int GetFD()const ; 
+	const std::string& GetUserName()const;
+	const std::string& GetNickname()const;
+	const std::string& GetHostName()const;
+	const std::string& GetPassword()const;
+	bool useInvite(const std::string& ref);
 
-    void SetFD(int value);
-    void SetUsername(const std::string& value);
-    void SetNickname(const std::string& value);
-    void SetHostname(const std::string& value);
-    void addInvite(const std::string& value);
+	void SetFD(int value);
+	void SetUsername(const std::string& value);
+	void SetNickname(const std::string& value);
+	void SetHostname(const std::string& value);
+	void SetPassword(const std::string& value);
+	void addInvite(const std::string& value);
 
-    bool IsAuthenticated();
-    void SetAuthenticated(bool value);
+	bool IsRegistered();
+	void SetRegistered(bool value);
 
-    bool IsRegistered();
-    void SetRegistered(bool value);
+	bool IsCapEnded();
+	void SetIsCapEnded(bool value);
 
-    bool IsCapEnded();
-    void SetIsCapEnded(bool value);
-
-    std::string GetPrefix();
-
+	std::string GetPrefix();
 };
 
 #endif // CLIENT_HPP

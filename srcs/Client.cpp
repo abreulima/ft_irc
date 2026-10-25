@@ -1,9 +1,6 @@
 #include "Client.hpp"
-#include <iostream>
 
-Client::Client() : _isAuthenticated(false), _isRegistered(false), _isCapEnded(false)
-{
-}
+Client::Client() : _isRegistered(false), _isCapEnded(false) {}
 
 int Client::GetFD() const
 {
@@ -21,6 +18,10 @@ const std::string &Client::GetHostName() const
 {
 	return (_hostname);
 }
+const std::string &Client::GetPassword() const
+{
+	return (_password);
+}
 bool Client::useInvite(const std::string &ref)
 {
 	if (_invites.find(ref) != _invites.end())
@@ -29,16 +30,6 @@ bool Client::useInvite(const std::string &ref)
 		return (true);
 	}
 	return (false);
-}
-
-bool Client::IsAuthenticated()
-{
-	return _isAuthenticated;
-}
-
-void Client::SetAuthenticated(bool value)
-{
-	_isAuthenticated = value;
 }
 
 bool Client::IsRegistered()
@@ -66,6 +57,10 @@ void Client::SetNickname(const std::string &value)
 void Client::SetHostname(const std::string &value)
 {
 	_hostname = value;
+}
+void Client::SetPassword(const std::string &value)
+{
+	_password = value;
 }
 void Client::addInvite(const std::string &value)
 {

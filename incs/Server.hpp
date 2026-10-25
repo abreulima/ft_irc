@@ -4,13 +4,11 @@
 # include "Channel.hpp"
 # include "Client.hpp"
 # include "Parser.hpp"
-# include "replies.hpp"
 
 # include <map>
 # include <vector>
 # include <poll.h>
 # include <stdint.h>
-# include <iomanip>
 
 # define SERVER_HOST	"42.pt"
 # define SERVER_PREFIX	":" SERVER_HOST " "
@@ -55,6 +53,8 @@ private:
 	void SendToClient(Client c, std::string message);
 	void SendToChannel(Channel c, std::string message, Client *exclude);
 	void SendToChannels(std::vector<Channel> channels, std::string message, Client *exclude);
+
+	void SendCode(Client c, int codeNum, std::string message);
 	void SendCode(Client c, int codeNum, std::string target, std::string message);
 	void SendCode(Client c, int codeNum, std::string target1, std::string target2, std::string message);
 

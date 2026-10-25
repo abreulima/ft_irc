@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Parser.hpp"
+#include "replies.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -9,7 +10,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <cstdlib>
-#include <errno.h>
 #include <sstream>
 #include <string>
 
@@ -147,6 +147,14 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 		else
 			std::cerr << YELLOW << "User (" + c.GetNickname() + ") : " << message << RESET << std::endl;
 
+		if (!c.IsRegistered() && (cmd != CAP && cmd != PASS && cmd != NICK && cmd != USER && cmd != QUIT)) {
+			SendCode(c, ERR_NOTREGISTERED, "", "Not yet registered!");
+			return;
+		} else if (c.IsRegistered() && (cmd == USER || cmd == PASS)) {
+			SendCode(c, ERR_ALREADYREGISTERED, "Already Registered.");
+			return;
+		}
+
 		switch (cmd)
 		{
 			case CAP:		HandleCAP(&c, message);				break;
@@ -165,7 +173,7 @@ void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
 
 			case ERROR:													break;
 
-			default:		std::cout << "UNKNOWN" << std::endl;			break;
+			default:		SendCode(c, ERR_UNKNOWNCOMMAND, c.GetNickname(), "Unknown Command.");
 		}
 	}
 }
@@ -184,21 +192,12 @@ void Server::HandleCAP(Client *c, std::string line)
 	}
 }
 
-// TODO: Missing Error Handling
 void Server::HandlePass(Client *c, Command::Pass data)
 {
-	if (c->IsAuthenticated()) {
-		SendToClient(*c, std::string(SERVER_PREFIX) + ReplyCodeToString(ERR_ALREADYREGISTERED) + " :Already Registered.");
-		return;
-	}
-	if (data.password.compare(password) == 0) {
-		c->SetAuthenticated(true);
-	} else {
-		SendToClient(*c, std::string(SERVER_PREFIX) + ReplyCodeToString(ERR_PASSWDMISMATCH) + " :Password mismatch.");
-	}
+	c->SetPassword(data.password);
+	TryRegister(c);
 }
 
-// TODO: If there's a password set, this request can only be handled after PASS 
 void Server::HandleNick(Client *c, Command::Nick data)
 {
 
@@ -211,7 +210,7 @@ void Server::HandleNick(Client *c, Command::Nick data)
 		return ;
 	}
 
-    std::string res = c->GetPrefix() + " NICK :" + data.nickname;
+	std::string res = c->GetPrefix() + " NICK :" + data.nickname;
 
 	if (c->IsRegistered())
 	{
@@ -227,6 +226,7 @@ void Server::HandleNick(Client *c, Command::Nick data)
 void Server::HandleUser(Client *c, Command::User data)
 {
 	c->SetUsername(data.username);
+	TryRegister(c);
 }
 
 // TODO: Missing Error Handling
@@ -552,6 +552,23 @@ void Server::SendToClient(Client c, std::string message)
 	send(c.GetFD(), message.c_str(), message.size(), 0);
 }
 
+void Server::SendCode(Client c, int codeNum, std::string message)
+{
+	std::stringstream ss;
+	ss << std::setw(3) << std::setfill('0') << codeNum;
+
+	std::string nick = c.GetNickname();
+	if (nick.empty())
+		nick = "*";
+
+	std::string res = std::string(SERVER_PREFIX) + ss.str() + " ";
+	res += nick;
+
+	res += " :" + message;
+
+	SendToClient(c, res);
+}
+
 void Server::SendCode(Client c, int codeNum, std::string target, std::string message)
 {
 	std::stringstream ss;
@@ -569,7 +586,7 @@ void Server::SendCode(Client c, int codeNum, std::string target, std::string mes
 
 	res += " :" + message;
 
-	SendToClient(c, message);
+	SendToClient(c, res);
 }
 
 void Server::SendCode(Client c, int codeNum, std::string target1, std::string target2, std::string message)
@@ -592,7 +609,7 @@ void Server::SendCode(Client c, int codeNum, std::string target1, std::string ta
 
 	res += " :" + message;
 
-	SendToClient(c, message);
+	SendToClient(c, res);
 }
 
 void Server::SendToChannel(Channel c, std::string message, Client *exclude)
@@ -678,12 +695,20 @@ void Server::TryRegister(Client *c)
 	
 	if (c->GetNickname().empty())
 		return ;
+	
+	if (c->GetUserName().empty())
+		return ;
 
 	if (IsNicknameInUse(c->GetNickname(), c))
 		return ;
 
 	if (!c->IsCapEnded())
 		return ;
+
+	if (!password.empty() && c->GetPassword().compare(password) != 0) {
+		SendCode(*c, ERR_PASSWDMISMATCH, "Password mismatch.");
+		return;
+	}
 
 	c->SetRegistered(true);
 
