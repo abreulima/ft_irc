@@ -34,7 +34,7 @@ private:
 	bool 							isRunning;
 
 	// Handlers
-	void handleCommands(size_t fd_id, std::vector<std::string>& messages);
+	void HandleCommands(Client &c, std::string clientMessage);
 	void HandleCAP(Client *c, std::string line);
 	void HandlePass(Client *c, Command::Pass data);
 	void HandleUser(Client *c, Command::User data);
@@ -69,6 +69,8 @@ private:
 
 	void DeleteEmptyChannel(Channel& channel);
 	void DeleteEmptyChannels();
+
+	void DisconnectClient(Client *c);
 public:
 	Server(std::string port, std::string password);
 	void Run();

@@ -86,6 +86,7 @@ void Server::Run()
 			struct sockaddr_in client_addr;
 			socklen_t client_len = sizeof(client_addr);
 
+			// TODO: accept could return an error
 			int connectionFD = accept(serverFD, (struct sockaddr *)&client_addr, &client_len);
 			
 			if (connectionFD >= 0)
@@ -101,29 +102,30 @@ void Server::Run()
 
 		for (size_t i = 1; i < fds.size();)
 		{
-			if (fds.at(i).revents & POLLIN)
+			pollfd client_pollfd = fds.at(i);
+
+			// Recebeu algo de um client
+			if (client_pollfd.revents & POLLIN)
 			{
-				// TODO: Manage buffering! Message could be incomplete.
+				// TODO: Manage buffering! Message could be incomplete, and sometimes has garbage in front of it from last messages.
 				char incoming[513];
 				int numBytes = recv(fds.at(i).fd, incoming, 512, 0);
 
-				// TODO: Not sure but I think we should handle == 0 apart from errors.
-				// If client disconnects, it should remove that client of all channels
-				// and if the channel is empty after that it should be removed as well.
-				if (numBytes <= 0)
+				if (numBytes == 0) 
 				{
-					int fd = fds.at(i).fd;
-
-					close(fd);
-					clients.erase(fd);
-					fds.erase(fds.begin() + 1);
-					continue;
+					Client &c = clients[client_pollfd.fd];
+					HandleQuit(&c, (Command::Quit){"User Disconnected."});
+				}
+				else if (numBytes < 0)
+				{
+					// TODO: Handle this possible errors!
+					std::cerr << "An error happened!" << std::endl;
 				}
 				else
 				{
-					Parser parser;
-					std::vector<std::string> messages = parser.Split(std::string(incoming, numBytes));
-					handleCommands(i, messages);
+					Client &c = clients[client_pollfd.fd];
+					std::string clientMessage(incoming, numBytes);
+					HandleCommands(c, clientMessage);
 				}
 			}
 			i++;
@@ -131,11 +133,11 @@ void Server::Run()
 	}
 }
 
-void Server::handleCommands(size_t fd_id, std::vector<std::string> &messages)
+void Server::HandleCommands(Client &c, std::string clientMessage)
 {
 	Parser parser;
 
-	Client &c = clients[fds.at(fd_id).fd];
+	std::vector<std::string> messages = parser.Split(clientMessage);
 
 	for (size_t j = 0; j < messages.size(); ++j)
 	{
@@ -540,9 +542,10 @@ void Server::HandleQuit(Client *c, Command::Quit data)
 	for (std::vector<Channel>::iterator it = channelsByMember.begin(); it != channelsByMember.end(); it++)
 	{
 		it->Remove(c);
-		SendToChannel(*it, res, c);
 		DeleteEmptyChannel(*it);
+		SendToChannel(*it, res, c);
 	}
+	DisconnectClient(c);
 }
 
 void Server::SendToClient(Client c, std::string message)
@@ -693,10 +696,7 @@ void Server::TryRegister(Client *c)
 	if (c->IsRegistered())
 		return ;
 	
-	if (c->GetNickname().empty())
-		return ;
-	
-	if (c->GetUserName().empty())
+	if (c->GetNickname().empty() || c->GetUserName().empty())
 		return ;
 
 	if (IsNicknameInUse(c->GetNickname(), c))
@@ -728,5 +728,18 @@ void Server::DeleteEmptyChannels()
 	for (ChannelIterator it = channels.begin(); it != channels.end(); it++)
 	{
 		DeleteEmptyChannel(it->second);
+	}
+}
+
+void Server::DisconnectClient(Client *c)
+{
+	for (std::vector<pollfd>::iterator it = fds.begin() + 1; it != fds.end(); it++) {
+		if (it->fd == c->GetFD()) {
+			int fd = it->fd;
+			clients.erase(fd);
+			fds.erase(it);
+			close(fd);
+			it--;
+		}
 	}
 }

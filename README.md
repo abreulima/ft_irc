@@ -1,9 +1,9 @@
 # Tasks
 
 #### REGISTRATION (PASS -> NICK -> USER)
-- [ ] Register with password
+- [x] Register with password
 - [x] Set nickname
-    - [ ] Nao permitir que dois usuarios utilizam o mesmo Nickname *
+	- [x] Nao permitir que dois usuarios utilizam o mesmo Nickname *
 - [x] Set username
 
 
@@ -32,13 +32,13 @@
 
 #### PERFECTING
 - [ ] Registration
-- [ ] Set User as authenticated
+- [x] Set User as registered
 - [ ] Error Handling
 - [ ] Join with modes
 - [ ] What else in nickname?
 - [X] Multiple, unique nicknames / usernames
 - [ ] Messages to channels you are not auth
-- [ ] Check permission for each command
+- [x] Check permission for each command
 - [ ] Permission chain mess up / stress
 - [ ] Flooding channel while client is busy
 
@@ -52,7 +52,7 @@
 - [ ] Low level optimization
 - [ ] Data management
 - [ ] Blockings
-- [ ] Disconnections
+- [x] Disconnections
 - [ ] Malformatted messages
 
 ## Modes
